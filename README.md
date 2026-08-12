@@ -24,23 +24,45 @@ No build step, no dependencies to install. It's a static site.
 Without this the tracker still works, but progress stays on whichever device
 made it. The status chip in the top right will read **This device**.
 
+Google reorganizes the Firebase console's navigation periodically, so the
+sidebar you see may not match the one described here. The **Search for
+products** box at the top of the sidebar is the stable way in — searching for
+"Realtime Database" or "Authentication" lands you in the right place whatever
+the current layout calls its sections. The free **Spark** plan covers this
+comfortably; the tracker stores 100 numbers.
+
 1. Go to <https://console.firebase.google.com> and **Add project**. Name it
    anything. Google Analytics is not needed — turn it off.
 
-2. **Build → Realtime Database → Create Database.** Pick the region closest to
-   you and choose **Start in locked mode**. (The rules below replace the
-   defaults in step 4.)
+2. Open **Realtime Database** (currently under *Databases & Storage*; older
+   consoles filed it under *Build*) and **Create Database**. Pick the region
+   closest to you and choose **Start in locked mode** — the rules in step 4
+   replace the defaults.
 
-3. **Build → Authentication → Get started → Sign-in method → Anonymous →
-   Enable.** This is what lets both phones read the same ledger without either
-   of you making an account.
+   Take the *Realtime* part literally. The console promotes **Firestore** more
+   prominently, and it is a different product — `assets/sync.js` talks to
+   Realtime Database and will not work against Firestore.
+
+   Note which region you picked. US-central projects get a `firebaseio.com`
+   database URL; every other region gets `firebasedatabase.app`. Both are
+   allowed by the deploy configs' CSP, so either is fine — just don't retype
+   the URL by hand later.
+
+3. Open **Authentication** (currently under *Security*) → **Get started** →
+   **Sign-in method** → **Anonymous** → **Enable**. This is what lets both
+   phones read the same ledger without either of you making an account.
+
+   Don't skip this one. The rules require an authenticated user, so without it
+   every read and write is denied, and the app falls back to local-only with a
+   **This device** chip rather than showing an error. If everything else looks
+   right and sharing still isn't working, check here first.
 
 4. Back in **Realtime Database → Rules**, replace everything with the contents
    of [`database.rules.json`](database.rules.json) and hit **Publish**.
 
-5. **Project settings (gear icon) → Your apps → Web (`</>`)**. Register the app
-   with any nickname. Firebase shows you a `firebaseConfig` object — copy the
-   four values into `assets/config.js`:
+5. **Project settings (gear icon next to Project Overview) → Your apps →
+   Web (`</>`)**. Register the app with any nickname. Firebase shows you a
+   `firebaseConfig` object — copy the four values into `assets/config.js`:
 
    ```js
    export const FIREBASE_CONFIG = {
@@ -94,14 +116,22 @@ Then:
 
 ### Skipping the share link
 
-If you'd rather not deal with links, pin a room in `assets/config.js`:
+If you'd rather not deal with links, you can pin a room in `assets/config.js`
+so every device that loads the site lands in the same ledger:
 
 ```js
-export const ROOM_ID = "our-house-fund-2026";
+export const ROOM_ID = "a-long-string-nobody-would-guess";
 ```
 
-Every device that loads the site lands in that room. Pick something nobody
-would guess — it is effectively the password.
+**Only do this in a private repository.** The room ID is effectively the
+password — it is the one thing keeping the ledger private — so committing it
+to a public repo publishes it. Anyone who found the repo could read the ID,
+authenticate anonymously, and read or write your data.
+
+In a public repo, leave `ROOM_ID` empty and use the share link. The generated
+room never touches git: it lives in the URL you send and in each device's
+local storage. If you want pinning anyway, make the repo private, or keep the
+value out of git and inject it at deploy time.
 
 ---
 
