@@ -4,7 +4,14 @@
    opened up at wider breakpoints.
    ========================================================================== */
 
+/* Palette tokens are named for the dark original, but they carry roles, not
+   literal colours: --ink is the page ground and --bone the primary text, in
+   both themes. theme.js always stamps an explicit data-theme on <html> before
+   this file paints, so the light palette needs one override block rather than
+   a media query and a selector kept in sync. */
 :root {
+  color-scheme: dark;
+
   --ink: #08080a;
   --panel: #101013;
   --panel-lit: #16161c;
@@ -16,6 +23,15 @@
   --crimson-lit: #d9304a;
   --amber: #e0a33c;
   --green: #3fae7a;
+
+  --chip-ok-line: #24402f;
+  --chip-err-line: #3a1a20;
+  /* Text on a crimson fill. Crimson stays dark in both themes, so this does
+     not flip with the palette. */
+  --on-accent: #fff;
+  --on-accent-dim: rgba(255, 255, 255, 0.68);
+  /* Opaque stand-in for the translucent bars where color-mix is missing. */
+  --scrim-solid: #0b0b0e;
 
   /* Safe areas: resolved once here so nothing downstream has to think. */
   --sa-t: env(safe-area-inset-top, 0px);
@@ -34,6 +50,29 @@
   --grid-gap: 5px;
 
   --ease: cubic-bezier(.2, .7, .3, 1);
+}
+
+/* Warm paper rather than white, so the crimson and amber keep the same
+   character they have in the dark palette. Every value here clears 4.5:1
+   against its background at the size it is actually used. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --ink: #f6f2ea;
+  --panel: #fffdf8;
+  --panel-lit: #efe9dd;
+  --line: #ddd5c6;
+  --line-lit: #c5bba7;
+  --bone: #14141a;
+  --muted: #6d6a63;
+  --crimson: #a4192e;
+  --crimson-lit: #c0203a;
+  --amber: #8a5d0a;
+  --green: #1c7a4f;
+
+  --chip-ok-line: #bcd9c7;
+  --chip-err-line: #edc7ce;
+  --scrim-solid: #f4f0e7;
 }
 
 * { box-sizing: border-box; }
@@ -149,14 +188,106 @@ h1 em { font-style: italic; color: var(--amber); }
   flex: none;
 }
 
-.chip[data-state="synced"] { color: var(--bone); border-color: #24402f; }
+.chip[data-state="synced"] { color: var(--bone); border-color: var(--chip-ok-line); }
 .chip[data-state="synced"] .chip__dot { background: var(--green); }
 .chip[data-state="offline"] .chip__dot { background: var(--amber); }
 .chip[data-state="connecting"] .chip__dot { animation: pulse 1.1s ease-in-out infinite; }
-.chip[data-state="error"] { color: var(--crimson-lit); border-color: #3a1a20; }
+.chip[data-state="error"] { color: var(--crimson-lit); border-color: var(--chip-err-line); }
 .chip[data-state="error"] .chip__dot { background: var(--crimson-lit); }
 
 @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.25 } }
+
+/* ---------- theme toggle ------------------------------------------------ */
+
+.masthead__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Matches the chip's height, and still clears a thumb via the ::before. */
+  width: 30px;
+  height: 30px;
+  position: relative;
+  flex: none;
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* Grows the touch target to 44px without growing the visible control. */
+.iconbtn::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+}
+
+.iconbtn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.iconbtn__i { display: none; }
+:root[data-theme-pref="system"] .iconbtn__i--system,
+:root[data-theme-pref="light"] .iconbtn__i--light,
+:root[data-theme-pref="dark"] .iconbtn__i--dark { display: block; }
+
+/* No preference stamped yet (theme.js blocked): show something rather than an
+   empty circle. */
+:root:not([data-theme-pref]) .iconbtn__i--system { display: block; }
+
+.iconbtn:active { transform: scale(0.94); }
+
+@media (hover: hover) and (pointer: fine) {
+  .iconbtn:hover { color: var(--bone); border-color: var(--line-lit); }
+}
+
+/* ---------- start date edit --------------------------------------------- */
+
+.window__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--line-lit);
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.window__edit svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--muted);
+}
+
+.window__edit:active { opacity: 0.6; }
+
+@media (hover: hover) and (pointer: fine) {
+  .window__edit:hover { border-bottom-color: var(--amber); }
+  .window__edit:hover svg { color: var(--amber); }
+}
 
 /* ---------- ledger ------------------------------------------------------ */
 
@@ -339,10 +470,13 @@ h1 em { font-style: italic; color: var(--amber); }
 .cell[aria-pressed="true"] {
   background: var(--crimson);
   border-color: var(--crimson-lit);
+  /* The amount inherits cell colour, and --bone is near-black in the light
+     palette — without this it would be dark text on dark crimson. */
+  color: var(--on-accent);
 }
 
 .cell[aria-pressed="true"] .n,
-.cell[aria-pressed="true"] .d { color: rgba(255, 255, 255, 0.68); }
+.cell[aria-pressed="true"] .d { color: var(--on-accent-dim); }
 .cell[aria-pressed="true"]::after { background: var(--amber); opacity: 1; }
 
 .cell.today { border-color: var(--amber); }
@@ -360,8 +494,8 @@ h1 em { font-style: italic; color: var(--amber); }
 
 .cell.is-flash { animation: flash 1.1s var(--ease); }
 @keyframes flash {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 163, 60, 0); }
-  25% { box-shadow: 0 0 0 3px rgba(224, 163, 60, 0.55); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--amber) 0%, transparent); }
+  25% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 55%, transparent); }
 }
 
 /* Touch gets a press state; hover is reserved for devices that truly hover. */
@@ -443,7 +577,7 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .btn--danger.is-armed {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--crimson);
   border-color: var(--crimson-lit);
 }
@@ -466,6 +600,108 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 /* ---------- toast ------------------------------------------------------- */
+
+/* ---------- start date sheet -------------------------------------------- */
+
+/* A bottom sheet on a phone — thumb-reachable, and it doesn't cover the grid
+   it is about. It becomes a centred dialog from tablet up. */
+.sheet {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--bone);
+  position: fixed;
+  inset: auto 0 0 0;
+}
+
+.sheet::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.sheet__inner {
+  display: grid;
+  gap: 14px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  padding: 22px var(--pad-r) calc(22px + var(--sa-b)) var(--pad-l);
+}
+
+.sheet__title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1;
+  margin: 0;
+}
+
+.sheet__note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.sheet__date {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  background: var(--panel-lit);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--bone);
+  font-family: inherit;
+  font-size: 16px; /* iOS zooms the page on focus below 16px. */
+  font-variant-numeric: tabular-nums;
+}
+
+.sheet__date:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.sheet__error {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--crimson-lit);
+}
+
+.sheet__actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.btn--primary {
+  background: var(--crimson);
+  border-color: var(--crimson-lit);
+  color: var(--on-accent);
+}
+
+.btn--ghost { border-color: var(--line); }
+
+@media (min-width: 620px) {
+  .sheet {
+    inset: 0;
+    width: min(420px, calc(100vw - 2 * var(--gutter)));
+    margin: auto;
+    height: max-content;
+  }
+
+  .sheet__inner {
+    border: 1px solid var(--line);
+    padding: 26px;
+  }
+
+  .sheet__actions { justify-content: flex-end; grid-auto-columns: auto; }
+  .sheet__actions .btn { padding: 10px 20px; }
+}
 
 .toast {
   position: fixed;
@@ -573,7 +809,7 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 @supports not (color: color-mix(in srgb, red 50%, transparent)) {
-  .railbar, .actionbar { background: #0b0b0e; }
+  .railbar, .actionbar { background: var(--scrim-solid); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -586,7 +822,8 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 @media (prefers-contrast: more) {
-  :root { --muted: #a0a0a8; --line: #3a3a44; }
+  :root[data-theme="dark"] { --muted: #a0a0a8; --line: #3a3a44; }
+  :root[data-theme="light"] { --muted: #4a4841; --line: #b3a993; }
 }
 
 @media print {

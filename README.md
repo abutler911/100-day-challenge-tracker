@@ -137,11 +137,29 @@ value out of git and inject it at deploy time.
 
 ## 3. Change the dates or the length
 
+### The start date, from the app
+
+Tap the Day 1 date under the headline. Pick a new one and every square
+relabels; the amounts don't move, because they follow the day number rather
+than the calendar. The `Today` highlight lands wherever today falls in the new
+window, or nowhere if the challenge hasn't started.
+
+This setting belongs to the room, not the phone — otherwise the two of you
+would see different dates on the same squares — so changing it changes it for
+both of you.
+
+> **Upgrading an existing setup?** The start date lives under a `meta` node the
+> original rules didn't allow. Re-publish [`database.rules.json`](database.rules.json)
+> in the Firebase console (Realtime Database → Rules → Publish) or saving a date
+> fails with a permission error. The app says so plainly if you forget.
+
+### Everything else, from the config
+
 `assets/config.js`:
 
 ```js
 export const CHALLENGE = {
-  startDate: "2026-08-13",  // day 1, local time
+  startDate: "2026-08-13",  // only the seed — the room's own date wins
   days: 100,                // day N costs $N
   locale: "en-US",
   currency: "USD",
@@ -149,6 +167,16 @@ export const CHALLENGE = {
 ```
 
 The goal recalculates itself: `days × (days + 1) ÷ 2`.
+
+## 4. Light and dark
+
+The circle button next to the status chip cycles **match the system → light →
+dark**, and remembers the choice on that device. It defaults to following the
+system, so it flips with the phone's own light/dark schedule.
+
+The theme is a per-device preference rather than a room setting: it changes
+nothing about the ledger, so there's no reason for one of you to be stuck with
+the other's choice.
 
 ---
 
@@ -165,6 +193,11 @@ The goal recalculates itself: `days × (days + 1) ÷ 2`.
   in the same second is the only way to notice, and the loser is one tap.
 - **Cold start.** The last server snapshot is cached, so opening the app shows
   real numbers instantly instead of zeros while the socket connects.
+- **What the chip means.** **Connecting** while the socket is still opening,
+  **Shared** once it's up, **Offline** only after a connection actually
+  dropped — or after eight seconds of never reaching one. "Not connected yet"
+  and "connection lost" look identical to the database client, and conflating
+  them is why a healthy cold start used to flash Offline.
 
 If Firebase is unreachable at load, the app falls back to device-local storage
 rather than showing an error, and says so in the footer.

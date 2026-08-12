@@ -6,8 +6,13 @@
 <title>100-Day Savings Challenge</title>
 <meta name="description" content="A dollar a day, plus one, until it's $5,050. A shared 100-day savings tracker.">
 
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#08080a">
+
+<!-- Resolves the theme onto <html> before the stylesheet paints, so the page
+     never flashes the wrong palette. Must stay above the stylesheet, and below
+     the theme-color meta it rewrites. -->
+<script src="./assets/theme.js"></script>
 
 <!-- home-screen install (iOS needs its own set) -->
 <meta name="mobile-web-app-capable" content="yes">
@@ -41,14 +46,28 @@
   <header class="masthead">
     <div class="masthead__top">
       <p class="eyebrow">100-day savings challenge</p>
-      <button type="button" class="chip" id="status" data-state="local">
-        <span class="chip__dot" aria-hidden="true"></span>
-        <span class="chip__text">Local only</span>
-      </button>
+      <div class="masthead__tools">
+        <!-- Which icon shows is driven by data-theme-pref on <html>, so the
+             button never needs to be repainted from script. -->
+        <button type="button" class="iconbtn" id="theme" aria-label="Change theme">
+          <svg class="iconbtn__i iconbtn__i--system" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></svg>
+          <svg class="iconbtn__i iconbtn__i--light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+          <svg class="iconbtn__i iconbtn__i--dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+        </button>
+        <button type="button" class="chip" id="status" data-state="local">
+          <span class="chip__dot" aria-hidden="true"></span>
+          <span class="chip__text">Local only</span>
+        </button>
+      </div>
     </div>
     <h1>A dollar a day, <em>plus one</em>,<br>until it's <span id="goalHeadline">$5,050</span>.</h1>
     <p class="window">
-      <span class="window__leg">Day 1 <b id="startLabel">—</b></span>
+      <span class="window__leg">Day 1
+        <button type="button" class="window__edit" id="editStart" aria-label="Change the start date">
+          <b id="startLabel">—</b>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16zM14 6l4 4"/></svg>
+        </button>
+      </span>
       <span class="window__arrow" aria-hidden="true">→</span>
       <span class="window__leg">Day <span id="lastDayNum">100</span> <b id="endLabel">—</b></span>
     </p>
@@ -96,6 +115,22 @@
     <p class="credits"><span id="syncNote">Progress is saved on this device only.</span></p>
   </footer>
 </div>
+
+<dialog class="sheet" id="startDialog" aria-labelledby="startTitle">
+  <form class="sheet__inner" id="startForm">
+    <h2 class="sheet__title" id="startTitle">Start date</h2>
+    <p class="sheet__note">
+      The date Day 1 falls on. Every square keeps its amount — only the dates
+      move. This is shared, so it changes on both phones.
+    </p>
+    <input type="date" class="sheet__date" id="startInput" required>
+    <p class="sheet__error" id="startError" role="alert" hidden></p>
+    <div class="sheet__actions">
+      <button type="button" class="btn btn--ghost" id="startCancel"><span>Cancel</span></button>
+      <button type="submit" class="btn btn--primary" id="startSave"><span>Save</span></button>
+    </div>
+  </form>
+</dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

@@ -29,7 +29,23 @@ function localDate(iso) {
   return new Date(y, m - 1, d);
 }
 
-const START = localDate(CHALLENGE.startDate);
+function toISO(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Round-tripping through Date catches the shapes a regex can't, like
+ *  2026-02-31, which rolls forward to March rather than failing. */
+function isValidISO(iso) {
+  if (typeof iso !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const parsed = localDate(iso);
+  return !Number.isNaN(parsed.getTime()) && toISO(parsed) === iso;
+}
+
+/** The start date belongs to the room — CHALLENGE.startDate is only the seed
+ *  used until the room reports one of its own. */
+let startISO = isValidISO(CHALLENGE.startDate) ? CHALLENGE.startDate : toISO(new Date());
+let START = localDate(startISO);
 
 function dateFor(day) {
   const d = new Date(START.getTime());
@@ -107,7 +123,7 @@ const resetBtn = el("reset");
 const cells = new Map();
 let state = {};
 let sync = null;
-const today = currentDay();
+let today = currentDay();
 
 function buildGrid() {
   const frag = document.createDocumentFragment();
@@ -206,6 +222,34 @@ function renderStatic() {
   el("endLabel").textContent = longDate.format(dateFor(DAYS));
 }
 
+/** Repaint what the start date decides: every square's date, and which one is
+ *  today. The amounts are tied to the day number, so they don't move. */
+function refreshDates() {
+  for (let i = 1; i <= DAYS; i++) {
+    const cell = cells.get(i);
+    if (!cell) continue;
+    const date = dateFor(i);
+    cell.querySelector(".d").textContent = shortDate.format(date);
+    cell.setAttribute("aria-label", `Day ${i}, ${shortDate.format(date)}, ${money.format(i)}`);
+    cell.classList.toggle("today", i === today);
+  }
+}
+
+/** Returns whether anything actually moved, so an echo of our own write
+ *  doesn't cause a pointless repaint of 100 cells. */
+function applyStart(iso) {
+  if (!isValidISO(iso) || iso === startISO) return false;
+
+  startISO = iso;
+  START = localDate(iso);
+  today = currentDay();
+
+  renderStatic();
+  refreshDates();
+  render();
+  return true;
+}
+
 /* -------------------------------------------------------------------------
    Status chip
    ------------------------------------------------------------------------- */
@@ -299,6 +343,72 @@ el("share").addEventListener("click", async () => {
   }
 });
 
+/* Cycles preference rather than flipping appearance, so "follow the system"
+   stays reachable instead of being a state you can only get back to by
+   clearing storage. */
+const THEME_ORDER = ["system", "light", "dark"];
+const THEME_LABEL = { system: "matching your system", light: "light", dark: "dark" };
+
+el("theme").addEventListener("click", () => {
+  const theme = window.__theme;
+  if (!theme) return;
+  const next = THEME_ORDER[(THEME_ORDER.indexOf(theme.pref()) + 1) % THEME_ORDER.length];
+  theme.set(next);
+  toast(`Theme: ${THEME_LABEL[next]}.`);
+  buzz(8);
+});
+
+/* ---------- start date -------------------------------------------------- */
+
+const startDialog = el("startDialog");
+const startInput = el("startInput");
+const startError = el("startError");
+const startSave = el("startSave");
+
+function showStartError(message) {
+  startError.textContent = message;
+  startError.hidden = false;
+}
+
+el("editStart").addEventListener("click", () => {
+  startInput.value = startISO;
+  startError.hidden = true;
+  startSave.disabled = false;
+  startDialog.showModal();
+});
+
+el("startCancel").addEventListener("click", () => startDialog.close());
+
+el("startForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const iso = startInput.value;
+  if (!isValidISO(iso)) {
+    showStartError("That isn't a date the challenge can start on.");
+    return;
+  }
+  if (iso === startISO) {
+    startDialog.close();
+    return;
+  }
+
+  startSave.disabled = true;
+  try {
+    // The write echoes back through onMeta, which is what repaints the grid.
+    // Without a backend yet, apply it directly so the dialog still works.
+    if (sync) await sync.setStartDate(iso);
+    else applyStart(iso);
+
+    startDialog.close();
+    toast(`Day 1 is now ${longDate.format(localDate(iso))}.`);
+    buzz(10);
+  } catch (err) {
+    showStartError(err.message);
+  } finally {
+    startSave.disabled = false;
+  }
+});
+
 el("today").addEventListener("click", () => {
   if (!today) {
     const now = new Date();
@@ -370,6 +480,9 @@ createSync({
     render();
   },
   onStatus: paintStatus,
+  onMeta(meta) {
+    if (meta && meta.startDate) applyStart(meta.startDate);
+  },
 }).then((instance) => {
   sync = instance;
   for (const [day, on] of buffered.splice(0)) sync.setDay(day, on);
