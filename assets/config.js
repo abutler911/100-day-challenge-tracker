@@ -15,10 +15,10 @@
  * rules in database.rules.json, plus the fact that your room ID is unguessable.
  */
 export const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
+  apiKey: "AIzaSyAIn-nT7ycuzGlHY6_TTmPqmL_6Y3gtDL8",
+  authDomain: "day-savings-challenge-fb430.firebaseapp.com",
+  databaseURL: "https://day-savings-challenge-fb430-default-rtdb.firebaseio.com",
+  projectId: "day-savings-challenge-fb430",
 };
 
 /** The challenge itself. */
@@ -32,10 +32,17 @@ export const CHALLENGE = {
 };
 
 /**
- * Optional. Pin a fixed room so both phones always land in the same ledger
- * without needing the share link, e.g. "our-house-fund-2026".
+ * Leave this empty. The app then generates a random room on first open, and
+ * the Share button sends the link to the other device — a one-time step, since
+ * the room is remembered locally afterwards.
  *
- * Leave it empty and the app generates a random room on first open; use the
- * Share button to send the link to the other device. Either way works.
+ * You can instead pin a fixed room here so every device lands in the same
+ * ledger with no link to pass around. Only do that in a PRIVATE repository.
+ * Nothing but the room ID's unguessability keeps this ledger private, so
+ * committing one to a public repo publishes the only thing standing between
+ * a stranger and your data — they could read it, or write to it.
+ *
+ * If you want pinning, make the repo private first, or keep the value out of
+ * git and inject it at deploy time.
  */
 export const ROOM_ID = "";

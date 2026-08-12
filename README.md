@@ -116,14 +116,22 @@ Then:
 
 ### Skipping the share link
 
-If you'd rather not deal with links, pin a room in `assets/config.js`:
+If you'd rather not deal with links, you can pin a room in `assets/config.js`
+so every device that loads the site lands in the same ledger:
 
 ```js
-export const ROOM_ID = "our-house-fund-2026";
+export const ROOM_ID = "a-long-string-nobody-would-guess";
 ```
 
-Every device that loads the site lands in that room. Pick something nobody
-would guess — it is effectively the password.
+**Only do this in a private repository.** The room ID is effectively the
+password — it is the one thing keeping the ledger private — so committing it
+to a public repo publishes it. Anyone who found the repo could read the ID,
+authenticate anonymously, and read or write your data.
+
+In a public repo, leave `ROOM_ID` empty and use the share link. The generated
+room never touches git: it lives in the URL you send and in each device's
+local storage. If you want pinning anyway, make the repo private, or keep the
+value out of git and inject it at deploy time.
 
 ---
 
