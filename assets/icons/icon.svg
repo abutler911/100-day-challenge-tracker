@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="100-Day Savings Challenge">
+  <rect width="512" height="512" rx="96" fill="#08080a"/>
+  <g>
+    <rect x="72"  y="72"  width="98" height="98" rx="22" fill="#b31f34"/>
+    <rect x="207" y="72"  width="98" height="98" rx="22" fill="#bc3936"/>
+    <rect x="342" y="72"  width="98" height="98" rx="22" fill="#c55437"/>
+    <rect x="72"  y="207" width="98" height="98" rx="22" fill="#ce6e39"/>
+    <rect x="207" y="207" width="98" height="98" rx="22" fill="#d7893a"/>
+    <rect x="342" y="207" width="98" height="98" rx="22" fill="#e0a33c"/>
+  </g>
+  <g fill="none" stroke="#2c2c36" stroke-width="6">
+    <rect x="75"  y="342" width="92" height="92" rx="19"/>
+    <rect x="210" y="342" width="92" height="92" rx="19"/>
+    <rect x="345" y="342" width="92" height="92" rx="19"/>
+  </g>
+</svg>

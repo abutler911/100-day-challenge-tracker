@@ -1,0 +1,21 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "rooms": {
+      "$room": {
+        ".read": "auth != null && $room.matches(/^[A-Za-z0-9_-]{6,64}$/)",
+        ".write": "auth != null && $room.matches(/^[A-Za-z0-9_-]{6,64}$/)",
+
+        "days": {
+          "$day": {
+            ".validate": "newData.isNumber() && $day.matches(/^([1-9]|[1-9][0-9]|100)$/)"
+          }
+        },
+
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

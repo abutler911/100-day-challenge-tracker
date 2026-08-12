@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>100-Day Savings Challenge</title>
+<meta name="description" content="A dollar a day, plus one, until it's $5,050. A shared 100-day savings tracker.">
+
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#08080a">
+
+<!-- home-screen install (iOS needs its own set) -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="$5,050">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="./assets/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="./assets/app.css">
+</head>
+<body>
+
+<!-- Condensed ledger. Fixed to the top, fades in once the full ledger scrolls away. -->
+<div class="railbar" id="railbar" aria-hidden="true">
+  <div class="railbar__inner">
+    <span class="railbar__total" id="railTotal">$0</span>
+    <span class="railbar__count" id="railCount">0 / 100</span>
+    <div class="railbar__track"><div class="railbar__fill" id="railFill"></div></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead__top">
+      <p class="eyebrow">100-day savings challenge</p>
+      <button type="button" class="chip" id="status" data-state="local">
+        <span class="chip__dot" aria-hidden="true"></span>
+        <span class="chip__text">Local only</span>
+      </button>
+    </div>
+    <h1>A dollar a day, <em>plus one</em>,<br>until it's <span id="goalHeadline">$5,050</span>.</h1>
+    <p class="window">
+      <span class="window__leg">Day 1 <b id="startLabel">—</b></span>
+      <span class="window__arrow" aria-hidden="true">→</span>
+      <span class="window__leg">Day <span id="lastDayNum">100</span> <b id="endLabel">—</b></span>
+    </p>
+  </header>
+
+  <span id="sentinel" class="sentinel" aria-hidden="true"></span>
+
+  <section class="ledger" aria-label="Progress summary">
+    <div class="total-row">
+      <div class="total" id="total" aria-live="polite">$0</div>
+      <div class="of">banked of <span id="goalInline">$5,050</span></div>
+    </div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="stats">
+      <div class="stat"><span>Days marked</span><b id="count">0 / 100</b></div>
+      <div class="stat"><span>Next deposit</span><b id="next">—</b></div>
+      <div class="stat"><span>Still to save</span><b id="left">$5,050</b></div>
+    </div>
+  </section>
+
+  <main>
+    <div class="grid" id="grid" role="group" aria-label="100 day savings grid"></div>
+    <p class="hint">Tap a square the day you set the money aside.</p>
+  </main>
+
+  <footer class="pagefoot">
+    <!-- Fixed to the bottom of the viewport on phones, inline from tablet up. -->
+    <div class="actionbar">
+      <div class="actionbar__inner">
+        <button type="button" class="btn" id="share">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v13M12 3 8 7M12 3l4 4M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>
+          <span>Share</span>
+        </button>
+        <button type="button" class="btn" id="today">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+          <span>Today</span>
+        </button>
+        <button type="button" class="btn btn--danger" id="reset">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>
+          <span>Clear</span>
+        </button>
+      </div>
+    </div>
+
+    <p class="credits"><span id="syncNote">Progress is saved on this device only.</span></p>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript>
+  <p style="padding:24px;font-family:monospace;color:#ece7de">
+    This tracker needs JavaScript to run.
+  </p>
+</noscript>
+
+<script type="module" src="./assets/app.js"></script>
+</body>
+</html>
