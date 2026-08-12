@@ -1,0 +1,396 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>100-Day Savings Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink: #08080a;
+    --panel: #101013;
+    --line: #23232a;
+    --bone: #ece7de;
+    --muted: #77777f;
+    --crimson: #b31f34;
+    --crimson-lit: #d9304a;
+    --amber: #e0a33c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--bone);
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 56px 24px 72px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 18px;
+  }
+
+  h1 {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(34px, 6vw, 58px);
+    line-height: 1.06;
+    letter-spacing: -0.01em;
+    margin: 0 0 20px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--amber);
+  }
+
+  .window {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .window b { color: var(--bone); font-weight: 500; }
+
+  /* ---------- ledger ---------- */
+
+  .ledger {
+    margin: 44px 0 40px;
+    padding: 26px 0 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .total-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .total {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: clamp(46px, 9vw, 76px);
+    line-height: 1;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .of {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .track {
+    height: 3px;
+    background: var(--line);
+    margin: 24px 0 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background: linear-gradient(90deg, var(--crimson), var(--amber));
+    transition: width 420ms cubic-bezier(.2,.7,.3,1);
+  }
+
+  .stats {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .stat span {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .stat b {
+    font-size: 15px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- grid ---------- */
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+    margin-bottom: 36px;
+  }
+
+  .cell {
+    position: relative;
+    aspect-ratio: 1;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--bone);
+    font-family: inherit;
+    padding: 7px 6px 9px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 140ms, border-color 140ms, transform 140ms;
+  }
+
+  .cell:hover { border-color: #3a3a44; transform: translateY(-2px); }
+  .cell:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .cell .n {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  .cell .amt {
+    font-size: clamp(12px, 1.5vw, 16px);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .cell .d {
+    font-size: 8.5px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* the weight bar: width encodes that day's cost against $100 */
+  .cell::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: var(--w);
+    background: var(--crimson);
+    opacity: 0.5;
+  }
+
+  .cell[aria-pressed="true"] {
+    background: var(--crimson);
+    border-color: var(--crimson-lit);
+  }
+
+  .cell[aria-pressed="true"] .n,
+  .cell[aria-pressed="true"] .d { color: rgba(255,255,255,0.66); }
+
+  .cell[aria-pressed="true"]::after { background: var(--amber); opacity: 1; }
+
+  .cell.today { border-color: var(--amber); }
+
+  .cell.today::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+
+  /* ---------- footer ---------- */
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  button.reset {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: color 140ms, border-color 140ms;
+  }
+
+  button.reset:hover { color: var(--crimson-lit); border-color: var(--crimson); }
+
+  @media (max-width: 720px) {
+    .wrap { padding: 36px 16px 56px; }
+    .grid { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .stats { gap: 26px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .cell { background: #fff; border-color: #999; color: #000; }
+    .cell[aria-pressed="true"] { background: #ddd; }
+    .cell .n, .cell .d { color: #555; }
+    button.reset { display: none; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">100-day savings challenge</p>
+    <h1>A dollar a day, <em>plus one</em>,<br>until it's $5,050.</h1>
+    <p class="window">Day 1 <b>Thu, Aug 13, 2026</b> &nbsp;→&nbsp; Day 100 <b>Fri, Nov 20, 2026</b></p>
+  </header>
+
+  <section class="ledger">
+    <div class="total-row">
+      <div class="total" id="total">$0</div>
+      <div class="of">banked of $5,050</div>
+    </div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="stats">
+      <div class="stat"><span>Days marked</span><b id="count">0 / 100</b></div>
+      <div class="stat"><span>Next deposit</span><b id="next">$1 · Aug 13</b></div>
+      <div class="stat"><span>Still to save</span><b id="left">$5,050</b></div>
+    </div>
+  </section>
+
+  <div class="grid" id="grid" role="group" aria-label="100 day savings grid"></div>
+
+  <footer>
+    <div>Tap a square the day you set the money aside. Progress saves automatically.</div>
+    <button class="reset" id="reset">Clear all</button>
+  </footer>
+</div>
+
+<script>
+  var START = new Date(2026, 7, 13); // Aug 13, 2026, local
+  var KEY = "savings100:checked";
+  var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var checked = new Set();
+
+  function dateFor(day) {
+    var d = new Date(START.getTime());
+    d.setDate(d.getDate() + (day - 1));
+    return d;
+  }
+
+  function label(d) { return MONTHS[d.getMonth()] + " " + d.getDate(); }
+
+  function isToday(d) {
+    var t = new Date();
+    return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
+  }
+
+  var grid = document.getElementById("grid");
+
+  for (var i = 1; i <= 100; i++) {
+    var d = dateFor(i);
+    var b = document.createElement("button");
+    b.className = "cell" + (isToday(d) ? " today" : "");
+    b.style.setProperty("--w", i + "%");
+    b.setAttribute("aria-pressed", "false");
+    b.setAttribute("aria-label", "Day " + i + ", " + label(d) + ", $" + i);
+    b.dataset.day = i;
+    b.innerHTML =
+      '<span class="n">' + i + '</span>' +
+      '<span class="amt">$' + i + '</span>' +
+      '<span class="d">' + label(d) + '</span>';
+    b.addEventListener("click", toggle);
+    grid.appendChild(b);
+  }
+
+  function toggle(e) {
+    var btn = e.currentTarget;
+    var day = Number(btn.dataset.day);
+    if (checked.has(day)) { checked.delete(day); } else { checked.add(day); }
+    btn.setAttribute("aria-pressed", checked.has(day) ? "true" : "false");
+    render();
+    save();
+  }
+
+  function money(n) { return "$" + n.toLocaleString("en-US"); }
+
+  function render() {
+    var sum = 0;
+    checked.forEach(function (n) { sum += n; });
+
+    document.getElementById("total").textContent = money(sum);
+    document.getElementById("count").textContent = checked.size + " / 100";
+    document.getElementById("left").textContent = money(5050 - sum);
+    document.getElementById("fill").style.width = (sum / 5050 * 100) + "%";
+
+    var next = 0;
+    for (var i = 1; i <= 100; i++) { if (!checked.has(i)) { next = i; break; } }
+    document.getElementById("next").textContent =
+      next ? money(next) + " · " + label(dateFor(next)) : "Complete";
+  }
+
+  function paint() {
+    var cells = grid.querySelectorAll(".cell");
+    for (var i = 0; i < cells.length; i++) {
+      var day = Number(cells[i].dataset.day);
+      cells[i].setAttribute("aria-pressed", checked.has(day) ? "true" : "false");
+    }
+  }
+
+  async function save() {
+    try {
+      await window.storage.set(KEY, JSON.stringify(Array.from(checked)));
+    } catch (err) {
+      console.error("Could not save progress:", err);
+    }
+  }
+
+  async function load() {
+    try {
+      var res = await window.storage.get(KEY);
+      if (res && res.value) {
+        JSON.parse(res.value).forEach(function (n) { checked.add(Number(n)); });
+      }
+    } catch (err) {
+      // nothing saved yet
+    }
+    paint();
+    render();
+  }
+
+  document.getElementById("reset").addEventListener("click", function () {
+    checked.clear();
+    paint();
+    render();
+    save();
+  });
+
+  render();
+  load();
+</script>
