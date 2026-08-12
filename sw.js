@@ -6,7 +6,10 @@
  * alone so the service worker never sits between you and your data.
  */
 
-const VERSION = "v1";
+/* Bump on every release that changes a shell file. The caches below are keyed
+   by it, so a bump is what evicts stale copies — without one, a deploy can be
+   served from the previous version's cache for a load or more. */
+const VERSION = "v2";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -17,6 +20,7 @@ const SHELL_FILES = [
   "./assets/app.js",
   "./assets/sync.js",
   "./assets/config.js",
+  "./assets/theme.js",
   "./manifest.webmanifest",
   "./assets/icons/icon.svg",
   "./assets/icons/icon-192.png",
@@ -85,14 +89,34 @@ self.addEventListener("fetch", (event) => {
   const sameOrigin = url.origin === self.location.origin;
   if (!sameOrigin && !CACHEABLE_HOSTS.has(url.hostname)) return;
 
-  // Stale-while-revalidate: instant from cache, refreshed in the background.
+  // Our own code and styles: network first, cache only as the offline
+  // fallback. Stale-while-revalidate would serve the previous deploy's copy
+  // for a load after every release — which is how a filled-in config.js can
+  // still read as empty and drop the app into local-only mode.
+  if (sameOrigin) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(SHELL).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((hit) => hit || Response.error()))
+    );
+    return;
+  }
+
+  // Fonts and the version-pinned Firebase SDK never change under a given URL,
+  // so serve those from cache and refresh in the background.
   event.respondWith(
     caches.match(request).then((cached) => {
       const network = fetch(request)
         .then((response) => {
           if (response && (response.ok || response.type === "opaque")) {
             const copy = response.clone();
-            caches.open(sameOrigin ? SHELL : RUNTIME).then((cache) => cache.put(request, copy));
+            caches.open(RUNTIME).then((cache) => cache.put(request, copy));
           }
           return response;
         })

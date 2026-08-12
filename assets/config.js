@@ -23,7 +23,13 @@ export const FIREBASE_CONFIG = {
 
 /** The challenge itself. */
 export const CHALLENGE = {
-  /** Day 1, as YYYY-MM-DD. Read as a local date, not UTC. */
+  /**
+   * Day 1, as YYYY-MM-DD. Read as a local date, not UTC.
+   *
+   * Only the seed. Once a start date is set from the app it lives in the room
+   * and applies to both devices, and this value is just what a brand new room
+   * begins with.
+   */
   startDate: "2026-08-13",
   /** Day count. Day N costs $N, so 100 days totals $5,050. */
   days: 100,

@@ -3,8 +3,8 @@
  *
  * Two interchangeable backends behind one interface:
  *
- *   createSync({ config, roomId, onState, onStatus })
- *     -> { setDay(day, on), clearAll(), destroy() }
+ *   createSync({ config, roomId, onState, onStatus, onMeta })
+ *     -> { setDay(day, on), clearAll(), setStartDate(iso), destroy() }
  *
  *   - Firebase Realtime Database when config is filled in. Shared across
  *     devices, live, no refresh needed.
@@ -13,6 +13,9 @@
  *
  * State is a plain object of marked days: { "1": 1755057600000, "7": ... }
  * where the value is the timestamp it was marked. Absent means unmarked.
+ *
+ * Room settings that both devices must agree on — currently just the start
+ * date — live alongside it under `meta` and arrive through onMeta.
  *
  * Writes are optimistic. Each one goes into a pending queue that is persisted
  * to localStorage before the network is touched, so a write made in a dead
@@ -24,6 +27,7 @@ const cdn = (mod) => `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/fir
 
 const cacheKey = (room) => `savings100:cache:${room}`;
 const pendingKey = (room) => `savings100:pending:${room}`;
+const metaKey = (room) => `savings100:meta:${room}`;
 
 export function isConfigured(config) {
   return Boolean(config && config.apiKey && config.databaseURL && config.projectId);
@@ -67,21 +71,31 @@ function merge(remote, pending) {
    Local-only backend
    ------------------------------------------------------------------------- */
 
-function createLocalSync({ roomId, onState, onStatus, reason }) {
+function createLocalSync({ roomId, onState, onStatus, onMeta, reason }) {
   const key = cacheKey(roomId);
+  const mKey = metaKey(roomId);
   let state = readJSON(key, {});
+  let meta = readJSON(mKey, {});
 
   const emit = () => onState({ ...state });
+  const emitMeta = () => onMeta({ ...meta });
 
   const onStorage = (event) => {
-    if (event.key !== key) return;
-    state = readJSON(key, {});
-    emit();
+    if (event.key === key) {
+      state = readJSON(key, {});
+      emit();
+    } else if (event.key === mKey) {
+      meta = readJSON(mKey, {});
+      emitMeta();
+    }
   };
   window.addEventListener("storage", onStorage);
 
   onStatus({ mode: "local", state: "local", reason });
-  queueMicrotask(emit);
+  queueMicrotask(() => {
+    emit();
+    emitMeta();
+  });
 
   const commit = () => {
     writeJSON(key, state);
@@ -98,6 +112,11 @@ function createLocalSync({ roomId, onState, onStatus, reason }) {
       state = {};
       commit();
     },
+    async setStartDate(iso) {
+      meta = { ...meta, startDate: iso };
+      writeJSON(mKey, meta);
+      emitMeta();
+    },
     destroy() {
       window.removeEventListener("storage", onStorage);
     },
@@ -108,7 +127,7 @@ function createLocalSync({ roomId, onState, onStatus, reason }) {
    Firebase Realtime Database backend
    ------------------------------------------------------------------------- */
 
-async function createFirebaseSync({ config, roomId, onState, onStatus }) {
+async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta }) {
   onStatus({ mode: "remote", state: "connecting" });
 
   const [{ initializeApp }, { getAuth, signInAnonymously }, database] = await Promise.all([
@@ -124,7 +143,10 @@ async function createFirebaseSync({ config, roomId, onState, onStatus }) {
 
   const db = getDatabase(app);
   const daysRef = ref(db, `rooms/${roomId}/days`);
+  const metaRef = ref(db, `rooms/${roomId}/meta`);
   const connRef = ref(db, ".info/connected");
+
+  let meta = readJSON(metaKey(roomId), {});
 
   // Paint immediately from the last snapshot we saw, so a cold start on a
   // phone shows real numbers instead of zeros while the socket opens.
@@ -132,17 +154,42 @@ async function createFirebaseSync({ config, roomId, onState, onStatus }) {
   let pending = readJSON(pendingKey(roomId), {});
   let connected = false;
 
+  /**
+   * `.info/connected` reports false the instant we subscribe, well before the
+   * socket has had a chance to open. Calling that "Offline" is wrong and it is
+   * what every cold start used to show. Until we have seen a real connection
+   * we are *connecting*; only a drop after that is genuinely offline.
+   *
+   * The timer keeps the other failure mode honest: opening the app with no
+   * signal at all would otherwise sit on "Connecting" forever.
+   */
+  let everConnected = false;
+  let connectingTimedOut = false;
+  const CONNECT_GRACE_MS = 8000;
+
+  const graceTimer = setTimeout(() => {
+    connectingTimedOut = true;
+    if (!connected) reportStatus();
+  }, CONNECT_GRACE_MS);
+
   const emit = () => onState(merge(remote, pending));
   const savePending = () => writeJSON(pendingKey(roomId), pending);
 
-  const reportStatus = () => {
+  function reportStatus() {
     const queued = Object.keys(pending).length;
-    if (!connected) onStatus({ mode: "remote", state: "offline", queued });
-    else if (queued) onStatus({ mode: "remote", state: "syncing", queued });
-    else onStatus({ mode: "remote", state: "synced", queued: 0 });
-  };
+    if (connected) {
+      onStatus({ mode: "remote", state: queued ? "syncing" : "synced", queued });
+    } else if (everConnected || connectingTimedOut) {
+      onStatus({ mode: "remote", state: "offline", queued });
+    } else {
+      onStatus({ mode: "remote", state: "connecting", queued });
+    }
+  }
 
-  queueMicrotask(emit);
+  queueMicrotask(() => {
+    emit();
+    onMeta({ ...meta });
+  });
 
   const unsubDays = onValue(daysRef, (snap) => {
     remote = snap.val() || {};
@@ -150,9 +197,19 @@ async function createFirebaseSync({ config, roomId, onState, onStatus }) {
     emit();
   });
 
+  const unsubMeta = onValue(metaRef, (snap) => {
+    meta = snap.val() || {};
+    writeJSON(metaKey(roomId), meta);
+    onMeta({ ...meta });
+  });
+
   const unsubConn = onValue(connRef, (snap) => {
     const wasConnected = connected;
     connected = snap.val() === true;
+    if (connected) {
+      everConnected = true;
+      clearTimeout(graceTimer);
+    }
     reportStatus();
     if (connected && !wasConnected) flush();
   });
@@ -209,9 +266,45 @@ async function createFirebaseSync({ config, roomId, onState, onStatus }) {
       reportStatus();
       flush();
     },
+    /**
+     * The start date belongs to the room, not the device, or the two of you
+     * would disagree about which square is today and what date every other
+     * square carries.
+     *
+     * Applied locally first so the grid redraws instantly, then written. A
+     * rejection here almost always means the database rules predate the `meta`
+     * node, which is worth saying out loud rather than silently reverting.
+     */
+    async setStartDate(iso) {
+      const previous = meta.startDate;
+      meta = { ...meta, startDate: iso };
+      writeJSON(metaKey(roomId), meta);
+      onMeta({ ...meta });
+
+      try {
+        await set(ref(db, `rooms/${roomId}/meta/startDate`), iso);
+      } catch (err) {
+        meta = { ...meta };
+        if (previous === undefined) delete meta.startDate;
+        else meta.startDate = previous;
+        writeJSON(metaKey(roomId), meta);
+        onMeta({ ...meta });
+
+        const denied = String(err && err.code) === "PERMISSION_DENIED";
+        throw new Error(
+          denied
+            ? "The database rules don't allow a start date yet. Re-publish database.rules.json in the Firebase console."
+            : "Could not save the start date. Check your connection and try again.",
+          { cause: err }
+        );
+      }
+    },
     destroy() {
+      clearTimeout(graceTimer);
       if (typeof unsubDays === "function") unsubDays();
       else off(daysRef);
+      if (typeof unsubMeta === "function") unsubMeta();
+      else off(metaRef);
       if (typeof unsubConn === "function") unsubConn();
       else off(connRef);
     },
@@ -222,14 +315,14 @@ async function createFirebaseSync({ config, roomId, onState, onStatus }) {
    Entry point
    ------------------------------------------------------------------------- */
 
-export async function createSync({ config, roomId, onState, onStatus }) {
+export async function createSync({ config, roomId, onState, onStatus, onMeta = () => {} }) {
   if (!isConfigured(config)) {
-    return createLocalSync({ roomId, onState, onStatus, reason: "unconfigured" });
+    return createLocalSync({ roomId, onState, onStatus, onMeta, reason: "unconfigured" });
   }
   try {
-    return await createFirebaseSync({ config, roomId, onState, onStatus });
+    return await createFirebaseSync({ config, roomId, onState, onStatus, onMeta });
   } catch (err) {
     console.error("Firebase sync unavailable, falling back to this device only:", err);
-    return createLocalSync({ roomId, onState, onStatus, reason: "error" });
+    return createLocalSync({ roomId, onState, onStatus, onMeta, reason: "error" });
   }
 }
