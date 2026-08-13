@@ -2,8 +2,8 @@
 
 One dollar more each day, until it's $5,050. Day 1 costs $1, day 100 costs $100.
 
-Two people, one shared ledger. Tap a square on either phone and it turns
-crimson on both.
+Two people, one shared ledger. Tap a square on either phone and it lights up
+on both.
 
 ```
 index.html              markup
@@ -12,7 +12,7 @@ assets/app.js           grid, rendering, actions
 assets/sync.js          Firebase / localStorage sync
 assets/theme.js         light/dark, resolved before first paint
 assets/config.js        the only file you need to edit
-assets/fonts/           self-hosted woff2, six faces
+assets/fonts/           self-hosted woff2, five faces
 database.rules.json     Firebase security rules
 sw.js                   offline shell
 ```
@@ -23,8 +23,9 @@ The fonts are served from this repo rather than from Google. Browsers with
 tracking or fingerprinting protection block `fonts.gstatic.com` at the network
 layer, which no header can work around, and the page quietly loses its
 typography. Self-hosting also drops two hosts from the CSP and two handshakes
-from a cold load. Both families are SIL Open Font License 1.1; the licences sit
-beside the files.
+from a cold load. Fredoka carries the display voice and Outfit the working
+text; both are SIL Open Font License 1.1, and the licences sit beside the
+files.
 
 The one remaining third party is the Firebase SDK, loaded from `gstatic.com` at
 a pinned version.
@@ -205,7 +206,7 @@ Fall behind and it reads the same way in the other direction:
   Day 10 today · you're on day 6, Aug 18
 ```
 
-Amber inside a week, crimson past it. Before day 1 it counts down to the start
+Tangerine inside a week, coral past it. Before day 1 it counts down to the start
 rather than reporting a deficit, and once all hundred are ticked it reads *All
 done* whatever the date says.
 
