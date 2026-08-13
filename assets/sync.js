@@ -33,6 +33,14 @@ export function isConfigured(config) {
   return Boolean(config && config.apiKey && config.databaseURL && config.projectId);
 }
 
+function hostOf(url) {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "invalid-database-url";
+  }
+}
+
 /* -------------------------------------------------------------------------
    Local persistence helpers
    ------------------------------------------------------------------------- */
@@ -175,15 +183,30 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
   const emit = () => onState(merge(remote, pending));
   const savePending = () => writeJSON(pendingKey(roomId), pending);
 
+  /**
+   * A listener that gets cancelled — denied by the rules, most often — is
+   * reported through onValue's third argument and nowhere else. Without one
+   * the failure is completely silent, which leaves "Offline" as the only
+   * symptom of problems that have nothing to do with connectivity.
+   */
+  let lastError = null;
+
+  function onCancel(what) {
+    return (err) => {
+      lastError = { at: what, code: err?.code || "unknown", message: err?.message || String(err) };
+      console.error(`Sync listener on ${what} was cancelled:`, err);
+      reportStatus();
+    };
+  }
+
   function reportStatus() {
     const queued = Object.keys(pending).length;
-    if (connected) {
-      onStatus({ mode: "remote", state: queued ? "syncing" : "synced", queued });
-    } else if (everConnected || connectingTimedOut) {
-      onStatus({ mode: "remote", state: "offline", queued });
-    } else {
-      onStatus({ mode: "remote", state: "connecting", queued });
-    }
+    const base = { mode: "remote", queued, error: lastError, host: hostOf(config.databaseURL) };
+
+    if (lastError) onStatus({ ...base, state: "error" });
+    else if (connected) onStatus({ ...base, state: queued ? "syncing" : "synced" });
+    else if (everConnected || connectingTimedOut) onStatus({ ...base, state: "offline" });
+    else onStatus({ ...base, state: "connecting" });
   }
 
   queueMicrotask(() => {
@@ -191,17 +214,26 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
     onMeta({ ...meta });
   });
 
-  const unsubDays = onValue(daysRef, (snap) => {
-    remote = snap.val() || {};
-    writeJSON(cacheKey(roomId), remote);
-    emit();
-  });
+  const unsubDays = onValue(
+    daysRef,
+    (snap) => {
+      lastError = null;
+      remote = snap.val() || {};
+      writeJSON(cacheKey(roomId), remote);
+      emit();
+    },
+    onCancel("days")
+  );
 
-  const unsubMeta = onValue(metaRef, (snap) => {
-    meta = snap.val() || {};
-    writeJSON(metaKey(roomId), meta);
-    onMeta({ ...meta });
-  });
+  const unsubMeta = onValue(
+    metaRef,
+    (snap) => {
+      meta = snap.val() || {};
+      writeJSON(metaKey(roomId), meta);
+      onMeta({ ...meta });
+    },
+    onCancel("meta")
+  );
 
   const unsubConn = onValue(connRef, (snap) => {
     const wasConnected = connected;
@@ -249,6 +281,21 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
 
   // Anything left over from a previous session goes out now.
   if (Object.keys(pending).length) flush();
+
+  /* One place to read the whole picture when something is wrong. Cheap to
+     leave in: it allocates nothing until it is called. */
+  window.__diag = () => ({
+    host: hostOf(config.databaseURL),
+    project: config.projectId,
+    room: roomId,
+    connected,
+    everConnected,
+    connectingTimedOut,
+    queuedWrites: Object.keys(pending).length,
+    daysKnown: Object.keys(remote).length,
+    startDate: meta.startDate || "(none set)",
+    lastError,
+  });
 
   return {
     setDay(day, on) {
