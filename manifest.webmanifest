@@ -1,7 +1,7 @@
 {
-  "name": "100-Day Savings Challenge",
+  "name": "100 Days to Less Broke",
   "short_name": "$5,050",
-  "description": "One dollar more each day, until it's $5,050. A shared 100-day savings tracker.",
+  "description": "100 Days to Less Broke. One dollar more each day until it's $5,050 — a savings tracker two people share.",
   "start_url": "./",
   "scope": "./",
   "id": "/",

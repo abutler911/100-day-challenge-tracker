@@ -1,4 +1,4 @@
-# 100-Day Savings Challenge
+# 100 Days to Less Broke
 
 One dollar more each day, until it's $5,050. Day 1 costs $1, day 100 costs $100.
 
