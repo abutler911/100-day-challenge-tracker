@@ -81,6 +81,14 @@
 
   --chip-ok-line: #24402f;
   --chip-err-line: #3a1a20;
+  /* The piggy bank. Its slot is a hole, so it stays dark in both themes
+     rather than tracking --ink, which inverts. */
+  --pig-shade: #8b1727;
+  --pig-slot: #26070d;
+  /* Not --amber: that is tuned for text on the page ground, and in the light
+     palette it darkens to a bronze that disappears against the crimson body
+     the coin falls past. This has to clear both. */
+  --pig-coin: #e0a33c;
   /* Text on a crimson fill. Crimson stays dark in both themes, so this does
      not flip with the palette. */
   --on-accent: #fff;
@@ -128,6 +136,10 @@
   --chip-ok-line: #bcd9c7;
   --chip-err-line: #edc7ce;
   --scrim-solid: #f4f0e7;
+
+  --pig-shade: #7d1223;
+  --pig-slot: #2b0810;
+  --pig-coin: #c8891f;
 }
 
 * { box-sizing: border-box; }
@@ -198,6 +210,85 @@ h1 {
 }
 
 h1 em { font-style: italic; color: var(--amber); }
+
+/* ---------- piggy bank mark --------------------------------------------- */
+
+.masthead__title {
+  display: flex;
+  /* Pinned to the first line rather than centred: the headline runs to three
+     lines on a 320px phone, and centring leaves the mark stranded halfway
+     down a block of type it is meant to sit alongside. */
+  align-items: flex-start;
+  gap: clamp(9px, 2.6vw, 18px);
+  /* The gap the h1 used to carry, moved out so the flex row owns the spacing
+     below the headline rather than losing it. */
+  margin-bottom: 16px;
+}
+
+.masthead__title h1 { margin-bottom: 0; }
+
+.pig {
+  flex: none;
+  width: clamp(46px, 14vw, 84px);
+  height: auto;
+  /* Drops the drawing to the optical centre of the first line — the coin
+     occupies the top of the artwork, so the bank itself rides low in its box. */
+  margin-top: -0.18em;
+  font-size: inherit;
+  overflow: visible;
+}
+
+.pig__belly,
+.pig__leg { fill: var(--crimson); }
+
+/* Ear and legs sit behind the belly, so a darker tone reads as depth rather
+   than as a seam. */
+.pig__ear { fill: var(--pig-shade); }
+
+/* The near side of the animal catching a little more light. */
+.pig__snout { fill: var(--crimson-lit); }
+
+.pig__nostril { fill: var(--pig-shade); }
+.pig__eye { fill: var(--on-accent); opacity: 0.85; }
+
+.pig__slot { fill: var(--pig-slot); }
+
+.pig__tail {
+  fill: none;
+  stroke: var(--pig-shade);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.pig__coin-face { fill: var(--pig-coin); }
+/* Fixed dark rather than --ink, which inverts and would turn this inner
+   shadow into an inner highlight in the light palette. */
+.pig__coin-rim { fill: #000; opacity: 0.18; }
+
+/* The coin drops in when a day is marked — money going in, once per tap.
+   The coin sits at cy 10 and the slot at 26.6, so 16.6 is the distance that
+   actually puts it through the hole. */
+.pig__coin { transform-origin: 42.5px 10px; }
+
+.pig.is-depositing .pig__coin {
+  animation: coin-drop 620ms var(--ease);
+}
+
+@keyframes coin-drop {
+  0% { transform: translateY(-9px) scale(0.8); opacity: 0; }
+  30% { transform: translateY(0) scale(1); opacity: 1; }
+  72% { transform: translateY(14px) scale(0.92); opacity: 1; }
+  100% { transform: translateY(16.6px) scale(0.5); opacity: 0; }
+}
+
+/* Settling nudge, so the bank feels like it took the weight. */
+.pig.is-depositing .pig__body { animation: pig-settle 620ms var(--ease); }
+
+@keyframes pig-settle {
+  0%, 55% { transform: translateY(0); }
+  72% { transform: translateY(1.4px); }
+  100% { transform: translateY(0); }
+}
 
 /* Each leg stays whole and wraps as a unit, so a date never splits across
    two lines on a narrow phone. */

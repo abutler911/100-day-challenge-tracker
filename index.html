@@ -60,7 +60,45 @@
         </button>
       </div>
     </div>
-    <h1>A dollar a day, <em>plus one</em>,<br>until it's <span id="goalHeadline">$5,050</span>.</h1>
+    <div class="masthead__title">
+      <!-- Drawn here rather than loaded: a couple of KB, sharp at any density,
+           and it takes the palette from the theme like everything else. The
+           coin drops when you mark a day. -->
+      <!-- Cropped to the drawing rather than a round 64: the artwork spans
+           roughly 4–57 on both axes, and the slack was making the mark render
+           a third smaller than its box in the masthead. -->
+      <svg class="pig" id="pig" viewBox="4 4 53 53" role="img" aria-label="A piggy bank">
+        <!-- Falls straight down the x of the slot, so the drop lands in it. -->
+        <g class="pig__coin">
+          <circle class="pig__coin-face" cx="42.5" cy="10" r="5"/>
+          <circle class="pig__coin-rim" cx="42.5" cy="10" r="2.2"/>
+        </g>
+
+        <g class="pig__body">
+          <!-- Ear over the head, which is the snout end. Behind the belly in
+               paint order so it tucks into the silhouette. -->
+          <path class="pig__ear" d="M23.6 28.2c-.6-5.4 2-9.4 5.6-9.6 2.4 2.4 3.4 6 2.8 10z"/>
+          <path class="pig__tail" d="M52 33.4c3.6-.7 4.5-3.7 2.5-4.7-1.8-.9-3.2 1-1.9 2.3"/>
+
+          <rect class="pig__leg" x="17" y="46" width="6.4" height="9.5" rx="2.6"/>
+          <rect class="pig__leg" x="39" y="46" width="6.4" height="9.5" rx="2.6"/>
+
+          <ellipse class="pig__belly" cx="32" cy="37" rx="21" ry="14.5"/>
+
+          <ellipse class="pig__snout" cx="11.2" cy="39" rx="6.5" ry="5.3"/>
+          <circle class="pig__nostril" cx="9.2" cy="39" r=".95"/>
+          <circle class="pig__nostril" cx="13.2" cy="39" r=".95"/>
+          <circle class="pig__eye" cx="21" cy="32.5" r="1.7"/>
+
+          <!-- Rotated to follow the fall of the back rather than sitting flat
+               across it, and set just inside the edge so it reads as cut in. -->
+          <rect class="pig__slot" x="36" y="25" width="13" height="3.2" rx="1.6"
+                transform="rotate(20 42.5 26.6)"/>
+        </g>
+      </svg>
+
+      <h1>A dollar a day, <em>plus one</em>,<br>until it's <span id="goalHeadline">$5,050</span>.</h1>
+    </div>
     <p class="window">
       <span class="window__leg">Day 1
         <button type="button" class="window__edit" id="editStart" aria-label="Change the start date">
