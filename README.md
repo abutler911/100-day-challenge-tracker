@@ -180,7 +180,38 @@ export const CHALLENGE = {
 
 The goal recalculates itself: `days × (days + 1) ÷ 2`.
 
-## 4. Light and dark
+## 4. Am I on track?
+
+Under the progress bar sits a line comparing two different answers to "what
+day are we on":
+
+- **Calendar day** — how far along the start date says you should be.
+- **Pace day** — the day your banked total actually corresponds to. The
+  challenge is a fixed ladder, `$1 + $2 + … + $N`, so any total maps to a day:
+  the largest `N` whose ladder still fits inside it.
+
+They only match if you pay in order. Drop $100 in on day 10 and you'll tick
+off squares totalling $100 — which is what someone on **day 13** would have
+banked, since thirteen days cost $91. So the line reads *3 days ahead*, and
+your squares no longer say anything about the date.
+
+```
+● 3 DAYS AHEAD
+  Day 10 by the calendar · day 13 by the money
+```
+
+Behind, it tells you the number that closes the gap instead:
+
+```
+● 10 DAYS BEHIND
+  Day 10 by the calendar · $55 to catch up
+```
+
+Amber inside a week, crimson past it. Before day 1 it says how long until the
+start rather than reporting you as behind, and once every square is marked it
+reads *Fully funded* regardless of the date.
+
+## 5. Light and dark
 
 The circle button next to the status chip cycles **match the system → light →
 dark**, and remembers the choice on that device. It defaults to following the

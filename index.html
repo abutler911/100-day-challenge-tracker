@@ -119,6 +119,16 @@
       <div class="of">banked of <span id="goalInline">$5,050</span></div>
     </div>
     <div class="track"><div class="fill" id="fill"></div></div>
+
+    <!-- Calendar day vs the day your banked total actually corresponds to.
+         Paying out of order makes those two diverge, and the gap is the
+         "are we on track" answer. -->
+    <div class="pace" id="pace" data-state="even">
+      <span class="pace__dot" aria-hidden="true"></span>
+      <span class="pace__verdict" id="paceVerdict">On pace</span>
+      <span class="pace__detail" id="paceDetail">Day 1 by the calendar</span>
+    </div>
+
     <div class="stats">
       <div class="stat"><span>Days marked</span><b id="count">0 / 100</b></div>
       <div class="stat"><span>Next deposit</span><b id="next">—</b></div>
