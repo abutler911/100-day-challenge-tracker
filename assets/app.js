@@ -165,6 +165,7 @@ grid.addEventListener("click", (event) => {
   else delete state[day];
   render();
   buzz(turningOn ? 12 : 6);
+  if (turningOn) dropCoin();
 
   if (sync) sync.setDay(day, turningOn);
   else buffered.push([day, turningOn]);
@@ -315,6 +316,20 @@ statusChip.addEventListener("click", () => {
 /* -------------------------------------------------------------------------
    Actions
    ------------------------------------------------------------------------- */
+
+/** Restarting the animation needs the class gone for a frame, not just
+ *  re-added, or a fast second tap does nothing. */
+const pig = el("pig");
+let coinTimer;
+
+function dropCoin() {
+  if (!pig) return;
+  pig.classList.remove("is-depositing");
+  void pig.offsetWidth;
+  pig.classList.add("is-depositing");
+  clearTimeout(coinTimer);
+  coinTimer = setTimeout(() => pig.classList.remove("is-depositing"), 700);
+}
 
 function buzz(ms) {
   if (navigator.vibrate) {
