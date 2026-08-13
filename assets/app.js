@@ -272,10 +272,15 @@ function paintStatus(status) {
 
   const note = el("syncNote");
   if (status.mode === "remote") {
-    note.textContent =
-      status.state === "offline"
-        ? `Offline — ${status.queued || 0} change(s) queued, they'll sync when you're back.`
-        : "Shared ledger. Both devices see the same squares.";
+    if (status.error) {
+      note.textContent = `Sync refused at ${status.error.at}: ${status.error.code}. Tap the chip for details.`;
+    } else if (status.state === "offline") {
+      note.textContent = `Offline — ${status.queued || 0} change(s) queued, they'll sync when you're back.`;
+    } else if (status.state === "connecting") {
+      note.textContent = "Connecting to the shared ledger…";
+    } else {
+      note.textContent = "Shared ledger. Both devices see the same squares.";
+    }
   } else if (status.reason === "error") {
     note.textContent = "Could not reach the shared ledger. Saving to this device for now.";
   } else {
@@ -283,16 +288,28 @@ function paintStatus(status) {
   }
 }
 
+/* Tapping the chip is the diagnostic path — the alternative is asking someone
+   to open a console on a phone. */
 statusChip.addEventListener("click", () => {
-  if (lastStatus.mode === "remote") {
-    toast(
-      lastStatus.state === "offline"
-        ? "Offline. Your taps are saved and will sync automatically."
-        : `Synced. Room ${room.slice(0, 6)}…`
-    );
-  } else {
+  const s = lastStatus;
+
+  if (s.mode !== "remote") {
     toast("Local only — see README.md to turn on sharing.");
+    return;
   }
+  if (s.error) {
+    toast(`${s.error.code} on ${s.error.at}. Host ${s.host}. Check the database rules.`);
+    return;
+  }
+  if (s.state === "connecting") {
+    toast(`Opening a socket to ${s.host}…`);
+    return;
+  }
+  if (s.state === "offline") {
+    toast(`Can't reach ${s.host}. ${s.queued || 0} change(s) queued. Room ${room.slice(0, 6)}…`);
+    return;
+  }
+  toast(`Synced. Room ${room.slice(0, 6)}…`);
 });
 
 /* -------------------------------------------------------------------------
