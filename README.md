@@ -1,6 +1,6 @@
 # 100-Day Savings Challenge
 
-A dollar a day, plus one, until it's $5,050. Day 1 costs $1, day 100 costs $100.
+One dollar more each day, until it's $5,050. Day 1 costs $1, day 100 costs $100.
 
 Two people, one shared ledger. Tap a square on either phone and it turns
 crimson on both.

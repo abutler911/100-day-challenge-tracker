@@ -1,7 +1,7 @@
 {
   "name": "100-Day Savings Challenge",
   "short_name": "$5,050",
-  "description": "A dollar a day, plus one, until it's $5,050. A shared 100-day savings tracker.",
+  "description": "One dollar more each day, until it's $5,050. A shared 100-day savings tracker.",
   "start_url": "./",
   "scope": "./",
   "id": "/",

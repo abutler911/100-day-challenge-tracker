@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>100-Day Savings Challenge</title>
-<meta name="description" content="A dollar a day, plus one, until it's $5,050. A shared 100-day savings tracker.">
+<meta name="description" content="One dollar more each day, until it's $5,050. A shared 100-day savings tracker.">
 
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#08080a">
@@ -97,7 +97,7 @@
         </g>
       </svg>
 
-      <h1>A dollar a day, <em>plus one</em>,<br>until it's <span id="goalHeadline">$5,050</span>.</h1>
+      <h1>One dollar <em>more</em> each day,<br>until it's <span id="goalHeadline">$5,050</span>.</h1>
     </div>
     <p class="window">
       <span class="window__leg">Day 1
@@ -120,13 +120,13 @@
     </div>
     <div class="track"><div class="fill" id="fill"></div></div>
 
-    <!-- Calendar day vs the day your banked total actually corresponds to.
-         Paying out of order makes those two diverge, and the gap is the
-         "are we on track" answer. -->
+    <!-- Calendar day vs squares actually retired. Ticking them out of order
+         makes those two diverge, and the gap is the "are we on track" answer.
+         Both strings are replaced on first render. -->
     <div class="pace" id="pace" data-state="even">
       <span class="pace__dot" aria-hidden="true"></span>
       <span class="pace__verdict" id="paceVerdict">On pace</span>
-      <span class="pace__detail" id="paceDetail">Day 1 by the calendar</span>
+      <span class="pace__detail" id="paceDetail">Day 1 today · nothing checked yet</span>
     </div>
 
     <div class="stats">
