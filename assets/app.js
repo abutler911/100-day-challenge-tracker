@@ -84,23 +84,6 @@ function elapsedDay() {
   return Math.round((b - a) / 86400000) + 1;
 }
 
-/**
- * The day a given amount corresponds to: the largest N whose ladder
- * 1 + 2 + ... + N still fits inside it. $100 is day 13, because thirteen days
- * cost $91 and fourteen would cost $105.
- *
- * Counted rather than solved with the quadratic, so there is no float
- * rounding to get wrong at the boundaries.
- */
-function dayForAmount(amount) {
-  let day = 0;
-  let ladder = 0;
-  while (day < DAYS && ladder + (day + 1) <= amount) {
-    day += 1;
-    ladder += day;
-  }
-  return { day, spare: amount - ladder };
-}
 
 /* -------------------------------------------------------------------------
    Room identity
@@ -247,7 +230,7 @@ function render() {
     ? `${money.format(next)} · ${shortDate.format(dateFor(next))}`
     : "Complete";
 
-  paintPace(sum);
+  paintPace(marked);
 
   resetBtn.disabled = marked === 0;
 }
@@ -255,12 +238,18 @@ function render() {
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /**
- * Says where the money puts you against where the calendar does. Marking days
- * out of order — dropping $100 in on day 10 — is the whole reason these come
- * apart, and the difference is the only number here worth acting on.
+ * Says how far along you are against how far along the date says you should
+ * be, counted in squares retired rather than dollars banked.
+ *
+ * The count is what decides whether the challenge finishes on time: it ends
+ * when all hundred are ticked, in whatever order they were ticked. Amount
+ * answers a different question — clearing 100, 99 and 98 first is $297, which
+ * by money looks weeks ahead and is three days of actual progress.
+ *
+ * Ticking N squares means you are through day N, so N is the day you are on
+ * and the calendar's day is what it is compared against.
  */
-function paintPace(sum) {
-  const pace = dayForAmount(sum);
+function paintPace(marked) {
   const elapsed = elapsedDay();
 
   let state = "even";
@@ -268,32 +257,37 @@ function paintPace(sum) {
   let detail;
 
   if (elapsed < 1) {
-    // Being "ahead" before day one is just prepaying, not a pace.
+    // Getting a head start before day one is not a pace to be ahead of.
     state = "waiting";
-    const away = 1 - elapsed;
-    verdict = `Starts in ${plural(away, "day")}`;
-    detail = sum
-      ? `${money.format(sum)} already banked`
+    verdict = `Starts in ${plural(1 - elapsed, "day")}`;
+    detail = marked
+      ? `${plural(marked, "square")} already checked`
       : `Day 1 is ${longDate.format(dateFor(1))}`;
   } else {
-    // Past the end, the calendar stops at 100 — you can't fall further behind
-    // a challenge that has finished.
+    // Past the end the calendar stops at 100 — you cannot fall further behind
+    // a challenge that has run out of days.
     const calendar = Math.min(elapsed, DAYS);
-    const delta = pace.day - calendar;
+    const delta = marked - calendar;
 
-    if (pace.day >= DAYS) {
+    if (marked >= DAYS) {
       state = "done";
-      verdict = "Fully funded";
-      detail = `All ${DAYS} days banked`;
-    } else if (delta >= 0) {
-      state = delta > 0 ? "ahead" : "even";
-      verdict = delta > 0 ? `${plural(delta, "day")} ahead` : "On pace";
-      detail = `Day ${calendar} by the calendar · day ${pace.day} by the money`;
+      verdict = "All done";
+      detail = `Every one of the ${DAYS} days checked off`;
     } else {
-      state = -delta >= 7 ? "far-behind" : "behind";
-      verdict = `${plural(-delta, "day")} behind`;
-      const owed = (calendar * (calendar + 1)) / 2 - sum;
-      detail = `Day ${calendar} by the calendar · ${money.format(owed)} to catch up`;
+      if (delta > 0) {
+        state = "ahead";
+        verdict = `${plural(delta, "day")} ahead`;
+      } else if (delta === 0) {
+        state = "even";
+        verdict = "On pace";
+      } else {
+        state = -delta >= 7 ? "far-behind" : "behind";
+        verdict = `${plural(-delta, "day")} behind`;
+      }
+
+      detail = marked
+        ? `Day ${calendar} today · you're on day ${marked}, ${shortDate.format(dateFor(marked))}`
+        : `Day ${calendar} today · nothing checked yet`;
     }
   }
 
