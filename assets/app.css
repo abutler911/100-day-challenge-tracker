@@ -5,96 +5,103 @@
    ========================================================================== */
 
 /* Self-hosted rather than loaded from Google. Browsers with tracking or
-   fingerprinting protection block fonts.gstatic.com outright — the request
-   fails at the network layer, so no header or CSP change can rescue it, and
-   the page silently drops to fallback faces. Serving them from our own origin
-   removes the third-party dependency, the extra DNS and TLS handshakes, and
-   two hosts from the CSP.
+   fingerprinting protection block fonts.gstatic.com at the network layer —
+   the request fails before any header is consulted, so nothing downstream can
+   rescue it and the page silently drops to fallback faces.
 
-   Latin subsets only, and only the six faces the styles below ask for; 148KB
-   total, cached immutably. Both families are SIL Open Font License 1.1 —
-   see the LICENSE files alongside the woff2s. */
-
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("./fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("./fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("./fonts/jetbrains-mono-latin-700-normal.woff2") format("woff2");
-}
+   Fredoka carries the display voice: rounded, heavy, warm. Outfit does the
+   working text — geometric, wide apertures, legible at nine pixels. Latin
+   subsets, five faces, ~104KB, cached immutably. Both are SIL OFL 1.1; the
+   licences sit beside the woff2s. */
 
 @font-face {
-  font-family: "Cormorant Garamond";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("./fonts/cormorant-garamond-latin-400-normal.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Cormorant Garamond";
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url("./fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Cormorant Garamond";
+  font-family: "Fredoka";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("./fonts/cormorant-garamond-latin-600-normal.woff2") format("woff2");
+  src: url("./fonts/fredoka-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/fredoka-latin-700-normal.woff2") format("woff2");
 }
 
-/* Palette tokens are named for the dark original, but they carry roles, not
-   literal colours: --ink is the page ground and --bone the primary text, in
-   both themes. theme.js always stamps an explicit data-theme on <html> before
-   this file paints, so the light palette needs one override block rather than
-   a media query and a selector kept in sync. */
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/outfit-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/outfit-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/outfit-latin-700-normal.woff2") format("woff2");
+}
+
+/* Warm, loud, and deliberately not neutral. Tokens carry roles rather than
+   literal colours — --ink is the page ground, --bone the primary text — so the
+   light palette is one override block. theme.js stamps an explicit data-theme
+   on <html> before this file paints, which is what keeps that to one block
+   instead of a media query and a selector held in sync. */
 :root {
   color-scheme: dark;
 
-  --ink: #08080a;
-  --panel: #101013;
-  --panel-lit: #16161c;
-  --line: #23232a;
-  --line-lit: #33333d;
-  --bone: #ece7de;
-  --muted: #77777f;
-  --crimson: #b31f34;
-  --crimson-lit: #d9304a;
-  --amber: #e0a33c;
-  --green: #3fae7a;
+  /* Deep plum rather than black: it lets the warm accents glow instead of
+     sitting flat on grey. */
+  --ink: #1a1024;
+  --panel: #251733;
+  --panel-lit: #32204380;
+  --line: #3d2a4f;
+  --line-lit: #573a6d;
+  --bone: #fdf3ec;
+  --muted: #a992bd;
 
-  --chip-ok-line: #24402f;
-  --chip-err-line: #3a1a20;
-  /* The piggy bank. Its slot is a hole, so it stays dark in both themes
-     rather than tracking --ink, which inverts. */
-  --pig-shade: #8b1727;
-  --pig-slot: #26070d;
-  /* Not --amber: that is tuned for text on the page ground, and in the light
-     palette it darkens to a bronze that disappears against the crimson body
-     the coin falls past. This has to clear both. */
-  --pig-coin: #e0a33c;
-  /* Text on a crimson fill. Crimson stays dark in both themes, so this does
-     not flip with the palette. */
-  --on-accent: #fff;
-  --on-accent-dim: rgba(255, 255, 255, 0.68);
-  /* Opaque stand-in for the translucent bars where color-mix is missing. */
-  --scrim-solid: #0b0b0e;
+  --coral: #ff5e5b;
+  --tangerine: #ff9f1c;
+  --sunny: #ffd23f;
+  --mint: #3ddc97;
+  --grape: #b06bf5;
+  --sky: #4cc9f0;
+
+  /* Semantic aliases so components ask for a job, not a hue. */
+  --hot: var(--coral);
+  --hot-lit: #ff8178;
+  --good: var(--mint);
+  --warn: var(--tangerine);
+
+  --chip-ok-line: #1f5f45;
+  --chip-err-line: #6b2230;
+  /* Text on the flame gradient. The gradient is bright in BOTH themes, so
+     unlike --bone this must not invert — defined once and never overridden. */
+  --on-flame: #2f0f16;
+  --on-flame-dim: #2f0f16bd;
+  --scrim-solid: #1d1228;
+
+  --pig-shade: #d94436;
+  --pig-slot: #2a0d14;
+  --pig-coin: #ffd23f;
+
+  /* The signature: every filled square and the progress bar run this ramp. */
+  --flame: linear-gradient(135deg, var(--coral) 0%, var(--tangerine) 55%, var(--sunny) 100%);
+  --glow: 0 6px 22px -8px #ff5e5b80;
+
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
 
   /* Safe areas: resolved once here so nothing downstream has to think. */
   --sa-t: env(safe-area-inset-top, 0px);
@@ -106,40 +113,53 @@
   --pad-l: calc(var(--gutter) + var(--sa-l));
   --pad-r: calc(var(--gutter) + var(--sa-r));
 
-  --rail-h: 54px;
-  --bar-h: calc(58px + var(--sa-b));
+  --rail-h: 58px;
+  --bar-h: calc(64px + var(--sa-b));
 
   --grid-cols: 5;
-  --grid-gap: 5px;
+  --grid-gap: 6px;
 
   --ease: cubic-bezier(.2, .7, .3, 1);
+  /* Overshoots and settles. This is what makes a tap feel like a thing
+     happening rather than a value changing. */
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
 }
 
-/* Warm paper rather than white, so the crimson and amber keep the same
-   character they have in the dark palette. Every value here clears 4.5:1
-   against its background at the size it is actually used. */
+/* Sunlit paper. The accents darken just enough to hold 4.5:1 on cream while
+   keeping the same temperature. */
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --ink: #f6f2ea;
-  --panel: #fffdf8;
-  --panel-lit: #efe9dd;
-  --line: #ddd5c6;
-  --line-lit: #c5bba7;
-  --bone: #14141a;
-  --muted: #6d6a63;
-  --crimson: #a4192e;
-  --crimson-lit: #c0203a;
-  --amber: #8a5d0a;
-  --green: #1c7a4f;
+  --ink: #fff6ec;
+  --panel: #ffffff;
+  --panel-lit: #ffe9d6b3;
+  --line: #f2d9c2;
+  --line-lit: #e0bb9c;
+  --bone: #2c1a2e;
+  --muted: #7c5f74;
 
-  --chip-ok-line: #bcd9c7;
-  --chip-err-line: #edc7ce;
-  --scrim-solid: #f4f0e7;
+  --coral: #e8443f;
+  --tangerine: #d97706;
+  --sunny: #b8860b;
+  --mint: #14875a;
+  --grape: #8b3fd4;
+  --sky: #0e7fa8;
 
-  --pig-shade: #7d1223;
-  --pig-slot: #2b0810;
-  --pig-coin: #c8891f;
+  --hot: var(--coral);
+  --hot-lit: #c9302c;
+  --good: var(--mint);
+  --warn: #b45309;
+
+  --chip-ok-line: #a7e0c4;
+  --chip-err-line: #f7c2bf;
+  --scrim-solid: #fff2e4;
+
+  --pig-shade: #c0322d;
+  --pig-slot: #3a1010;
+  --pig-coin: #ffc93c;
+
+  --flame: linear-gradient(135deg, #ff5e5b 0%, #ff8c1a 55%, #ffb703 100%);
+  --glow: 0 6px 22px -10px #e8443f66;
 }
 
 * { box-sizing: border-box; }
@@ -157,7 +177,7 @@ body {
   min-height: 100dvh;
   background: var(--ink);
   color: var(--bone);
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -200,16 +220,31 @@ a, button {
 }
 
 h1 {
-  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  font-weight: 400;
-  font-size: clamp(30px, 8.5vw, 58px);
-  line-height: 1.08;
-  letter-spacing: -0.01em;
+  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(32px, 9.5vw, 66px);
+  line-height: 1;
+  letter-spacing: -0.025em;
   margin: 0 0 16px;
   text-wrap: balance;
 }
 
-h1 em { font-style: italic; color: var(--amber); }
+/* Painting the ramp onto the glyphs rather than a flat accent. The fallback
+   colour matters: a browser without background-clip:text would otherwise
+   render this invisible. */
+h1 em {
+  font-style: normal;
+  color: var(--coral);
+}
+
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  h1 em {
+    background: var(--flame);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
 
 /* ---------- piggy bank mark --------------------------------------------- */
 
@@ -239,17 +274,17 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .pig__belly,
-.pig__leg { fill: var(--crimson); }
+.pig__leg { fill: var(--hot); }
 
 /* Ear and legs sit behind the belly, so a darker tone reads as depth rather
    than as a seam. */
 .pig__ear { fill: var(--pig-shade); }
 
 /* The near side of the animal catching a little more light. */
-.pig__snout { fill: var(--crimson-lit); }
+.pig__snout { fill: var(--hot-lit); }
 
 .pig__nostril { fill: var(--pig-shade); }
-.pig__eye { fill: var(--on-accent); opacity: 0.85; }
+.pig__eye { fill: var(--on-flame); opacity: 0.85; }
 
 .pig__slot { fill: var(--pig-slot); }
 
@@ -260,7 +295,14 @@ h1 em { font-style: italic; color: var(--amber); }
   stroke-linecap: round;
 }
 
-.pig__coin-face { fill: var(--pig-coin); }
+.pig__coin-face {
+  fill: var(--pig-coin);
+  /* No single fill clears both the body and the page — bright enough to read
+     on a dark-red pig is too bright to read on cream. The outline separates
+     it structurally so the fill only has to win against the body. */
+  stroke: var(--pig-slot);
+  stroke-width: 1.1;
+}
 /* Fixed dark rather than --ink, which inverts and would turn this inner
    shadow into an inner highlight in the light palette. */
 .pig__coin-rim { fill: #000; opacity: 0.18; }
@@ -335,11 +377,11 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .chip[data-state="synced"] { color: var(--bone); border-color: var(--chip-ok-line); }
-.chip[data-state="synced"] .chip__dot { background: var(--green); }
-.chip[data-state="offline"] .chip__dot { background: var(--amber); }
+.chip[data-state="synced"] .chip__dot { background: var(--good); }
+.chip[data-state="offline"] .chip__dot { background: var(--warn); }
 .chip[data-state="connecting"] .chip__dot { animation: pulse 1.1s ease-in-out infinite; }
-.chip[data-state="error"] { color: var(--crimson-lit); border-color: var(--chip-err-line); }
-.chip[data-state="error"] .chip__dot { background: var(--crimson-lit); }
+.chip[data-state="error"] { color: var(--hot-lit); border-color: var(--chip-err-line); }
+.chip[data-state="error"] .chip__dot { background: var(--hot-lit); }
 
 @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.25 } }
 
@@ -431,8 +473,8 @@ h1 em { font-style: italic; color: var(--amber); }
 .window__edit:active { opacity: 0.6; }
 
 @media (hover: hover) and (pointer: fine) {
-  .window__edit:hover { border-bottom-color: var(--amber); }
-  .window__edit:hover svg { color: var(--amber); }
+  .window__edit:hover { border-bottom-color: var(--warn); }
+  .window__edit:hover svg { color: var(--warn); }
 }
 
 /* ---------- ledger ------------------------------------------------------ */
@@ -451,11 +493,31 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .total {
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: clamp(44px, 13vw, 76px);
+  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(50px, 15vw, 88px);
   line-height: 1;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
+  color: var(--coral);
+}
+
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .total {
+    background: var(--flame);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* Kicks when the figure changes, so the number feels earned. */
+.total.is-bumped { animation: total-bump 460ms var(--spring); }
+
+@keyframes total-bump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.07) rotate(-1.2deg); }
+  100% { transform: scale(1) rotate(0); }
 }
 
 .of {
@@ -465,8 +527,10 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .track {
-  height: 3px;
-  background: var(--line);
+  height: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
   margin: 20px 0 18px;
   position: relative;
   overflow: hidden;
@@ -476,8 +540,24 @@ h1 em { font-style: italic; color: var(--amber); }
   position: absolute;
   inset: 0 auto 0 0;
   width: 0;
-  background: linear-gradient(90deg, var(--crimson), var(--amber));
-  transition: width 420ms var(--ease);
+  border-radius: 999px;
+  background: var(--flame);
+  transition: width 620ms var(--spring);
+}
+
+/* A slow travelling highlight, so the bar reads as live rather than painted. */
+.fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(100deg, transparent 20%, #ffffff5c 50%, transparent 80%);
+  animation: sheen 2.8s linear infinite;
+}
+
+@keyframes sheen {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
 }
 
 /* ---------- pace ---------------------------------------------------------
@@ -503,8 +583,8 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .pace__verdict {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 11.5px;
+  font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bone);
@@ -520,15 +600,15 @@ h1 em { font-style: italic; color: var(--amber); }
 /* Colour carries the same meaning the words already do, so it is reinforcing
    rather than load-bearing. */
 .pace[data-state="ahead"] .pace__dot,
-.pace[data-state="done"] .pace__dot { background: var(--green); }
+.pace[data-state="done"] .pace__dot { background: var(--good); }
 .pace[data-state="ahead"] .pace__verdict,
-.pace[data-state="done"] .pace__verdict { color: var(--green); }
+.pace[data-state="done"] .pace__verdict { color: var(--good); }
 
-.pace[data-state="behind"] .pace__dot { background: var(--amber); }
-.pace[data-state="behind"] .pace__verdict { color: var(--amber); }
+.pace[data-state="behind"] .pace__dot { background: var(--warn); }
+.pace[data-state="behind"] .pace__verdict { color: var(--warn); }
 
-.pace[data-state="far-behind"] .pace__dot { background: var(--crimson-lit); }
-.pace[data-state="far-behind"] .pace__verdict { color: var(--crimson-lit); }
+.pace[data-state="far-behind"] .pace__dot { background: var(--hot-lit); }
+.pace[data-state="far-behind"] .pace__verdict { color: var(--hot-lit); }
 
 .pace[data-state="waiting"] .pace__verdict { color: var(--muted); }
 
@@ -549,8 +629,9 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .stat b {
-  font-size: clamp(12px, 3.4vw, 15px);
-  font-weight: 500;
+  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(13px, 3.7vw, 17px);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -585,7 +666,7 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .railbar__total {
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
   font-size: 26px;
   font-weight: 600;
   line-height: 1;
@@ -612,7 +693,7 @@ h1 em { font-style: italic; color: var(--amber); }
 .railbar__fill {
   height: 100%;
   width: 0;
-  background: linear-gradient(90deg, var(--crimson), var(--amber));
+  background: linear-gradient(90deg, var(--hot), var(--warn));
   transition: width 420ms var(--ease);
 }
 
@@ -625,6 +706,19 @@ h1 em { font-style: italic; color: var(--amber); }
   margin-bottom: 18px;
 }
 
+/* Squares arrive in a diagonal wash rather than all at once. The delay is set
+   per cell from script and capped, so the last one is not left waiting. */
+.grid.is-entering .cell {
+  opacity: 0;
+  animation: cell-in 420ms var(--spring) forwards;
+  animation-delay: var(--in-delay, 0ms);
+}
+
+@keyframes cell-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.86); }
+  to { opacity: 1; transform: none; }
+}
+
 .cell {
   container-type: inline-size;
   position: relative;
@@ -632,10 +726,11 @@ h1 em { font-style: italic; color: var(--amber); }
   /* Never smaller than a comfortable thumb, whatever the viewport does. */
   min-height: 52px;
   border: 1px solid var(--line);
+  border-radius: var(--r-md);
   background: var(--panel);
   color: var(--bone);
   font-family: inherit;
-  padding: 6px 5px 8px;
+  padding: 7px 7px 9px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -644,13 +739,21 @@ h1 em { font-style: italic; color: var(--amber); }
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-  transition: background 140ms, border-color 140ms, transform 120ms var(--ease);
+  transition: background 180ms, border-color 180ms, box-shadow 180ms,
+              transform 260ms var(--spring);
 }
 
 /* Cell type scales off the cell's own width, so it stays proportional at
    every column count instead of guessing from the viewport. */
 .cell .n { font-size: clamp(8px, 15cqw, 11px); color: var(--muted); letter-spacing: 0.04em; line-height: 1; }
-.cell .amt { font-size: clamp(11px, 26cqw, 19px); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; }
+.cell .amt {
+  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(12px, 28cqw, 21px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
 .cell .d { font-size: clamp(7.5px, 13cqw, 10px); color: var(--muted); letter-spacing: 0.02em; line-height: 1; }
 
 /* The weight bar: width encodes that day's cost against the final day. */
@@ -661,23 +764,33 @@ h1 em { font-style: italic; color: var(--amber); }
   bottom: 0;
   height: 2px;
   width: var(--w);
-  background: var(--crimson);
+  background: var(--hot);
   opacity: 0.5;
 }
 
 .cell[aria-pressed="true"] {
-  background: var(--crimson);
-  border-color: var(--crimson-lit);
-  /* The amount inherits cell colour, and --bone is near-black in the light
-     palette — without this it would be dark text on dark crimson. */
-  color: var(--on-accent);
+  background: var(--flame);
+  border-color: transparent;
+  box-shadow: var(--glow);
+  /* The amount inherits cell colour, and --bone inverts between themes — this
+     is set against the gradient, which does not. */
+  color: var(--on-flame);
+}
+
+/* One overshoot on the tap that filled it. */
+.cell.is-popping { animation: cell-pop 420ms var(--spring); z-index: 2; }
+
+@keyframes cell-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.14); }
+  100% { transform: scale(1); }
 }
 
 .cell[aria-pressed="true"] .n,
-.cell[aria-pressed="true"] .d { color: var(--on-accent-dim); }
-.cell[aria-pressed="true"]::after { background: var(--amber); opacity: 1; }
+.cell[aria-pressed="true"] .d { color: var(--on-flame-dim); }
+.cell[aria-pressed="true"]::after { background: var(--warn); opacity: 1; }
 
-.cell.today { border-color: var(--amber); }
+.cell.today { border-color: var(--warn); }
 
 .cell.today::before {
   content: "";
@@ -687,29 +800,22 @@ h1 em { font-style: italic; color: var(--amber); }
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--amber);
+  background: var(--warn);
 }
 
 .cell.is-flash { animation: flash 1.1s var(--ease); }
 @keyframes flash {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--amber) 0%, transparent); }
-  25% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 55%, transparent); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--warn) 0%, transparent); }
+  25% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 55%, transparent); }
 }
 
 /* Touch gets a press state; hover is reserved for devices that truly hover. */
 .cell:active { transform: scale(0.94); }
-.cell:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.cell:focus-visible { outline: 2px solid var(--warn); outline-offset: 2px; }
 
 @media (hover: hover) and (pointer: fine) {
   .cell:hover { border-color: var(--line-lit); transform: translateY(-2px); }
-  .cell[aria-pressed="true"]:hover { border-color: var(--amber); }
-}
-
-.hint {
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  margin: 0 0 20px;
+  .cell[aria-pressed="true"]:hover { border-color: var(--warn); }
 }
 
 /* ---------- action bar -------------------------------------------------- */
@@ -722,7 +828,7 @@ h1 em { font-style: italic; color: var(--amber); }
   backdrop-filter: blur(16px) saturate(1.3);
   -webkit-backdrop-filter: blur(16px) saturate(1.3);
   border-top: 1px solid var(--line);
-  padding: 8px var(--pad-r) max(8px, var(--sa-b)) var(--pad-l);
+  padding: 10px var(--pad-r) max(10px, var(--sa-b)) var(--pad-l);
 }
 
 .actionbar__inner {
@@ -741,19 +847,23 @@ h1 em { font-style: italic; color: var(--amber); }
   justify-content: center;
   gap: 4px;
   /* 44px is the floor for a reliable thumb target. */
-  min-height: 44px;
-  padding: 6px 8px;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  color: var(--muted);
+  min-height: 46px;
+  padding: 7px 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--bone);
   font-family: inherit;
-  font-size: 9px;
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: color 140ms, background 140ms, border-color 140ms, transform 120ms var(--ease);
+  transition: color 160ms, background 160ms, border-color 160ms,
+              transform 200ms var(--spring);
 }
+
+.btn:active { transform: scale(0.93); }
 
 .btn svg {
   width: 18px;
@@ -766,18 +876,19 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .btn:active { transform: scale(0.95); background: var(--panel-lit); }
-.btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.btn:focus-visible { outline: 2px solid var(--warn); outline-offset: 2px; }
 .btn[disabled] { opacity: 0.35; pointer-events: none; }
 
 @media (hover: hover) and (pointer: fine) {
   .btn:hover { color: var(--bone); border-color: var(--line); }
-  .btn--danger:hover { color: var(--crimson-lit); border-color: var(--crimson); }
+  .btn--danger:hover { color: var(--hot-lit); border-color: var(--hot); }
 }
 
 .btn--danger.is-armed {
-  color: var(--on-accent);
-  background: var(--crimson);
-  border-color: var(--crimson-lit);
+  color: var(--on-flame);
+  background: var(--flame);
+  border-color: transparent;
+  box-shadow: var(--glow);
 }
 
 /* On phones this holds only the note — the action bar is lifted out of flow
@@ -788,13 +899,6 @@ h1 em { font-style: italic; color: var(--amber); }
   gap: 18px;
   border-top: 1px solid var(--line);
   padding-top: 16px;
-}
-
-.credits {
-  margin: 0;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  color: var(--muted);
 }
 
 /* ---------- toast ------------------------------------------------------- */
@@ -825,11 +929,12 @@ h1 em { font-style: italic; color: var(--amber); }
   gap: 14px;
   background: var(--panel);
   border-top: 1px solid var(--line);
-  padding: 22px var(--pad-r) calc(22px + var(--sa-b)) var(--pad-l);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: 26px var(--pad-r) calc(24px + var(--sa-b)) var(--pad-l);
 }
 
 .sheet__title {
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
   font-weight: 600;
   font-size: 26px;
   line-height: 1;
@@ -857,7 +962,7 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .sheet__date:focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--warn);
   outline-offset: 1px;
 }
 
@@ -865,7 +970,7 @@ h1 em { font-style: italic; color: var(--amber); }
   margin: 0;
   font-size: 11px;
   line-height: 1.5;
-  color: var(--crimson-lit);
+  color: var(--hot-lit);
 }
 
 .sheet__actions {
@@ -877,9 +982,10 @@ h1 em { font-style: italic; color: var(--amber); }
 }
 
 .btn--primary {
-  background: var(--crimson);
-  border-color: var(--crimson-lit);
-  color: var(--on-accent);
+  background: var(--flame);
+  border-color: transparent;
+  color: var(--on-flame);
+  box-shadow: var(--glow);
 }
 
 .btn--ghost { border-color: var(--line); }
@@ -910,9 +1016,9 @@ h1 em { font-style: italic; color: var(--amber); }
   max-width: min(90vw, 420px);
   background: var(--panel-lit);
   border: 1px solid var(--line-lit);
-  border-radius: 10px;
-  padding: 11px 16px;
-  font-size: 11px;
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-size: 11.5px;
   letter-spacing: 0.05em;
   color: var(--bone);
   text-align: center;
@@ -958,7 +1064,6 @@ h1 em { font-style: italic; color: var(--amber); }
   h1 { margin-bottom: 20px; }
   .ledger { margin: 40px 0 34px; padding-top: 26px; }
   .stats { gap: 44px; }
-  .hint { margin-bottom: 0; }
 
   /* The bar stops floating and rejoins the document, above the footer note. */
   .actionbar {
@@ -1026,9 +1131,87 @@ h1 em { font-style: italic; color: var(--amber); }
 
 @media print {
   body { background: #fff; color: #000; padding: 0; }
-  .railbar, .actionbar, .toast, .chip, .hint { display: none !important; }
+  .railbar, .actionbar, .toast, .chip { display: none !important; }
   .cell { background: #fff; border-color: #999; color: #000; break-inside: avoid; }
   .cell[aria-pressed="true"] { background: #ddd; }
   .cell .n, .cell .d { color: #555; }
   .grid { --grid-cols: 10; }
+}
+
+/* ==========================================================================
+   Celebration
+   Fired at every tenth square. Built from a handful of absolutely positioned
+   spans rather than a canvas: no library, nothing running when idle, and the
+   whole thing removes itself when the animation ends.
+   ========================================================================== */
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti i {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  width: var(--size);
+  height: var(--size);
+  background: var(--c);
+  border-radius: var(--round);
+  opacity: 0;
+  animation: confetti-fly var(--dur) var(--ease) forwards;
+  animation-delay: var(--delay);
+}
+
+@keyframes confetti-fly {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0) scale(0.4); }
+  25% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--spin)) scale(1);
+  }
+}
+
+/* The milestone banner that rides with it. */
+.cheer {
+  position: fixed;
+  left: 50%;
+  top: 38%;
+  z-index: 71;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(28px, 9vw, 52px);
+  letter-spacing: -0.02em;
+  color: var(--coral);
+  text-align: center;
+  animation: cheer-pop 1500ms var(--spring) forwards;
+}
+
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .cheer {
+    background: var(--flame);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@keyframes cheer-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-6deg); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(2deg); }
+  30% { transform: translate(-50%, -50%) scale(1) rotate(0); }
+  75% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+  100% { opacity: 0; transform: translate(-50%, -62%) scale(0.96); }
+}
+
+/* Someone who has asked for less motion gets none of this at all — the global
+   reduced-motion rule only shortens animations, and a burst of forty spans
+   flashing on and off is worse than not firing it. */
+@media (prefers-reduced-motion: reduce) {
+  .confetti, .cheer { display: none !important; }
 }

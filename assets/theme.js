@@ -20,7 +20,7 @@
 
   /* Keep these in step with --ink in app.css; it is what paints the phone's
      status bar and the browser chrome around the page. */
-  var BAR = { light: "#f6f2ea", dark: "#08080a" };
+  var BAR = { light: "#fff6ec", dark: "#1a1024" };
 
   function readPref() {
     try {

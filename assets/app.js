@@ -155,6 +155,9 @@ function buildGrid() {
     btn.setAttribute("aria-pressed", "false");
     btn.setAttribute("aria-label", `Day ${i}, ${shortDate.format(date)}, ${money.format(i)}`);
     btn.dataset.day = String(i);
+    // Sweeps in rather than appearing all at once. Capped so the hundredth
+    // square is not still waiting half a second after the first.
+    btn.style.setProperty("--in-delay", `${Math.min(i * 7, 520)}ms`);
     btn.innerHTML =
       `<span class="n">${i}</span>` +
       `<span class="amt">${money.format(i)}</span>` +
@@ -164,6 +167,21 @@ function buildGrid() {
   }
 
   grid.appendChild(frag);
+
+  // Only ever on the first paint — dropped once it has played so later
+  // re-renders don't replay it.
+  if (!reduceMotion.matches) {
+    grid.classList.add("is-entering");
+    setTimeout(() => grid.classList.remove("is-entering"), 1100);
+  }
+}
+
+function popCell(cell) {
+  if (reduceMotion.matches) return;
+  cell.classList.remove("is-popping");
+  void cell.offsetWidth;
+  cell.classList.add("is-popping");
+  setTimeout(() => cell.classList.remove("is-popping"), 460);
 }
 
 /** Taps made before the backend finishes connecting, replayed once it does. */
@@ -181,9 +199,18 @@ grid.addEventListener("click", (event) => {
   // backend echoes the real state back and render() reconciles.
   if (turningOn) state[day] = Date.now();
   else delete state[day];
-  render();
-  buzz(turningOn ? 12 : 6);
-  if (turningOn) dropCoin();
+  const marked = render();
+
+  if (turningOn) {
+    popCell(btn);
+    dropCoin();
+    // Every tenth square earns a burst. celebrate() does its own haptic, so
+    // the plain one would only muddy it.
+    if (marked > 0 && marked % 10 === 0) celebrate(marked);
+    else buzz(12);
+  } else {
+    buzz(6);
+  }
 
   if (sync) sync.setDay(day, turningOn);
   else buffered.push([day, turningOn]);
@@ -210,7 +237,7 @@ function render() {
 
   const pct = (sum / GOAL) * 100;
 
-  el("total").textContent = money.format(sum);
+  countTo(sum);
   el("count").textContent = `${marked} / ${DAYS}`;
   el("left").textContent = money.format(GOAL - sum);
   el("fill").style.width = `${pct}%`;
@@ -233,6 +260,125 @@ function render() {
   paintPace(marked);
 
   resetBtn.disabled = marked === 0;
+  return marked;
+}
+
+/* -------------------------------------------------------------------------
+   The running total
+   ------------------------------------------------------------------------- */
+
+const totalEl = el("total");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+/* What is on screen right now, and where it is heading. These have to be
+   separate: a tap makes the backend echo the same state straight back, so
+   countTo is called twice with the same target within a frame. Tracking only
+   the destination made the second call believe it had already arrived, cancel
+   the animation and snap. */
+let displayTotal = 0;
+let targetTotal = 0;
+let countFrame = 0;
+let counting = false;
+
+/**
+ * Rolls the figure to its new value instead of swapping it. One rAF loop, no
+ * library. A repeat call for the same destination is ignored so the echo
+ * cannot interrupt the roll; a genuinely new destination retargets from
+ * wherever the digits currently are, so fast taps chain rather than jump.
+ *
+ * The first paint and anyone who has asked for less motion get the number
+ * directly — an animated count on load is a stunt, not feedback.
+ */
+function countTo(next) {
+  if (counting && next === targetTotal) return;
+
+  cancelAnimationFrame(countFrame);
+  targetTotal = next;
+
+  if (reduceMotion.matches || displayTotal === next) {
+    counting = false;
+    displayTotal = next;
+    totalEl.textContent = money.format(next);
+    return;
+  }
+
+  const from = displayTotal;
+  const delta = next - from;
+  const started = performance.now();
+  // Long enough to read as motion, scaled a little by how far it has to go.
+  const dur = Math.min(900, 260 + Math.abs(delta) * 6);
+  counting = true;
+
+  const step = (now) => {
+    const t = Math.min(1, (now - started) / dur);
+    // easeOutCubic: quick off the mark, settles gently.
+    const eased = 1 - Math.pow(1 - t, 3);
+    displayTotal = Math.round(from + delta * eased);
+    totalEl.textContent = money.format(displayTotal);
+
+    if (t < 1) {
+      countFrame = requestAnimationFrame(step);
+    } else {
+      counting = false;
+      displayTotal = next;
+      totalEl.textContent = money.format(next);
+    }
+  };
+  countFrame = requestAnimationFrame(step);
+
+  totalEl.classList.remove("is-bumped");
+  void totalEl.offsetWidth;
+  totalEl.classList.add("is-bumped");
+}
+
+/* -------------------------------------------------------------------------
+   Celebration
+   ------------------------------------------------------------------------- */
+
+const CHEERS = [
+  "Nice.", "Ten more.", "Rolling.", "Look at you.", "Halfway!",
+  "Unstoppable.", "So close.", "Nearly there.", "One to go.", "DONE!",
+];
+
+/**
+ * Fires on every tenth square. Spans rather than a canvas: nothing runs when
+ * idle, there is no library, and the whole node removes itself on the way out.
+ */
+function celebrate(marked) {
+  if (reduceMotion.matches) return;
+
+  const palette = ["--coral", "--tangerine", "--sunny", "--mint", "--grape", "--sky"];
+  const layer = document.createElement("div");
+  layer.className = "confetti";
+
+  for (let i = 0; i < 46; i++) {
+    const bit = document.createElement("i");
+    const angle = Math.random() * Math.PI * 2;
+    const reach = 120 + Math.random() * 260;
+    bit.style.cssText = `
+      --x:${45 + Math.random() * 10}vw; --y:${34 + Math.random() * 8}vh;
+      --dx:${Math.cos(angle) * reach}px; --dy:${Math.sin(angle) * reach + 220}px;
+      --size:${6 + Math.random() * 8}px;
+      --c:var(${palette[i % palette.length]});
+      --round:${Math.random() > 0.5 ? "50%" : "2px"};
+      --spin:${Math.random() * 900 - 450}deg;
+      --dur:${1100 + Math.random() * 700}ms;
+      --delay:${Math.random() * 180}ms;
+    `;
+    layer.appendChild(bit);
+  }
+
+  const banner = document.createElement("div");
+  banner.className = "cheer";
+  banner.textContent = CHEERS[Math.min(CHEERS.length - 1, Math.floor(marked / 10) - 1)] || "Nice.";
+
+  document.body.append(layer, banner);
+  setTimeout(() => {
+    layer.remove();
+    banner.remove();
+  }, 2100);
+
+  buzz([14, 60, 14]);
 }
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -346,27 +492,13 @@ const STATUS_TEXT = {
 
 let lastStatus = { mode: "local", state: "local" };
 
+/* The chip is the whole status surface now — the standing explanation under
+   the action bar is gone. Nothing diagnostic went with it: tapping the chip
+   still reports the host, the queue and the last error. */
 function paintStatus(status) {
   lastStatus = status;
   statusChip.dataset.state = status.state;
   statusChip.querySelector(".chip__text").textContent = STATUS_TEXT[status.state] || status.state;
-
-  const note = el("syncNote");
-  if (status.mode === "remote") {
-    if (status.error) {
-      note.textContent = `Sync refused at ${status.error.at}: ${status.error.code}. Tap the chip for details.`;
-    } else if (status.state === "offline") {
-      note.textContent = `Offline — ${status.queued || 0} change(s) queued, they'll sync when you're back.`;
-    } else if (status.state === "connecting") {
-      note.textContent = "Connecting to the shared ledger…";
-    } else {
-      note.textContent = "Shared ledger. Both devices see the same squares.";
-    }
-  } else if (status.reason === "error") {
-    note.textContent = "Could not reach the shared ledger. Saving to this device for now.";
-  } else {
-    note.textContent = "Saved on this device only. Add your Firebase config to share it.";
-  }
 }
 
 /* Tapping the chip is the diagnostic path — the alternative is asking someone

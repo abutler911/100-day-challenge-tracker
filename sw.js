@@ -9,7 +9,7 @@
 /* Bump on every release that changes a shell file. The caches below are keyed
    by it, so a bump is what evicts stale copies — without one, a deploy can be
    served from the previous version's cache for a load or more. */
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -25,12 +25,11 @@ const SHELL_FILES = [
   "./assets/icons/icon.svg",
   "./assets/icons/icon-192.png",
   "./assets/icons/apple-touch-icon.png",
-  "./assets/fonts/jetbrains-mono-latin-400-normal.woff2",
-  "./assets/fonts/jetbrains-mono-latin-500-normal.woff2",
-  "./assets/fonts/jetbrains-mono-latin-700-normal.woff2",
-  "./assets/fonts/cormorant-garamond-latin-400-normal.woff2",
-  "./assets/fonts/cormorant-garamond-latin-400-italic.woff2",
-  "./assets/fonts/cormorant-garamond-latin-600-normal.woff2",
+  "./assets/fonts/fredoka-latin-600-normal.woff2",
+  "./assets/fonts/fredoka-latin-700-normal.woff2",
+  "./assets/fonts/outfit-latin-400-normal.woff2",
+  "./assets/fonts/outfit-latin-500-normal.woff2",
+  "./assets/fonts/outfit-latin-700-normal.woff2",
 ];
 
 /** The only third party left is the version-pinned Firebase SDK. Fonts are
