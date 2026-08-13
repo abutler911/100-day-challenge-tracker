@@ -9,26 +9,18 @@
    the request fails before any header is consulted, so nothing downstream can
    rescue it and the page silently drops to fallback faces.
 
-   Fredoka carries the display voice: rounded, heavy, warm. Outfit does the
-   working text — geometric, wide apertures, legible at nine pixels. Latin
-   subsets, five faces, ~104KB, cached immutably. Both are SIL OFL 1.1; the
-   licences sit beside the woff2s. */
+   One family doing every job, and nothing above 600. Display sizes take the
+   *light* weight: at 60px, 300 reads as confident where a heavy face reads as
+   shouting. Weight is reserved for small text, which actually needs it.
+   Latin subsets, four faces, 76KB. SIL OFL 1.1; licence sits beside them. */
 
 @font-face {
-  font-family: "Fredoka";
+  font-family: "Outfit";
   font-style: normal;
-  font-weight: 600;
+  font-weight: 300;
   font-display: swap;
-  src: url("./fonts/fredoka-latin-600-normal.woff2") format("woff2");
+  src: url("./fonts/outfit-latin-300-normal.woff2") format("woff2");
 }
-@font-face {
-  font-family: "Fredoka";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("./fonts/fredoka-latin-700-normal.woff2") format("woff2");
-}
-
 @font-face {
   font-family: "Outfit";
   font-style: normal;
@@ -46,9 +38,9 @@
 @font-face {
   font-family: "Outfit";
   font-style: normal;
-  font-weight: 700;
+  font-weight: 600;
   font-display: swap;
-  src: url("./fonts/outfit-latin-700-normal.woff2") format("woff2");
+  src: url("./fonts/outfit-latin-600-normal.woff2") format("woff2");
 }
 
 /* Warm, loud, and deliberately not neutral. Tokens carry roles rather than
@@ -84,19 +76,20 @@
 
   --chip-ok-line: #1f5f45;
   --chip-err-line: #6b2230;
-  /* Text on the flame gradient. The gradient is bright in BOTH themes, so
-     unlike --bone this must not invert — defined once and never overridden. */
-  --on-flame: #2f0f16;
-  --on-flame-dim: #2f0f16bd;
+  /* Text on a filled square. --hot is a warm mid-tone in BOTH themes, so
+     unlike --bone this must not invert — defined once, never overridden.
+     Tuned against the darker light-theme coral, which is the tighter of the
+     two: 4.60:1 there, 6.04:1 on dark. */
+  --on-hot: #2a0c12;
+  --on-hot-dim: #2a0c12bd;
   --scrim-solid: #1d1228;
 
   --pig-shade: #d94436;
   --pig-slot: #2a0d14;
   --pig-coin: #ffd23f;
 
-  /* The signature: every filled square and the progress bar run this ramp. */
-  --flame: linear-gradient(135deg, var(--coral) 0%, var(--tangerine) 55%, var(--sunny) 100%);
-  --glow: 0 6px 22px -8px #ff5e5b80;
+  /* Flat, not a ramp. One colour carries the filled state everywhere. */
+  --glow: 0 3px 12px -6px #ff5e5b66;
 
   --r-sm: 10px;
   --r-md: 16px;
@@ -158,8 +151,7 @@
   --pig-slot: #3a1010;
   --pig-coin: #ffc93c;
 
-  --flame: linear-gradient(135deg, #ff5e5b 0%, #ff8c1a 55%, #ffb703 100%);
-  --glow: 0 6px 22px -10px #e8443f66;
+  --glow: 0 3px 12px -7px #e8443f4d;
 }
 
 * { box-sizing: border-box; }
@@ -220,30 +212,19 @@ a, button {
 }
 
 h1 {
-  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
-  font-weight: 700;
-  font-size: clamp(32px, 9.5vw, 66px);
+  font-family: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 300;
+  font-size: clamp(34px, 10vw, 70px);
   line-height: 1;
   letter-spacing: -0.025em;
   margin: 0 0 16px;
   text-wrap: balance;
 }
 
-/* Painting the ramp onto the glyphs rather than a flat accent. The fallback
-   colour matters: a browser without background-clip:text would otherwise
-   render this invisible. */
 h1 em {
   font-style: normal;
+  font-weight: 500;
   color: var(--coral);
-}
-
-@supports (-webkit-background-clip: text) or (background-clip: text) {
-  h1 em {
-    background: var(--flame);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
 }
 
 /* ---------- piggy bank mark --------------------------------------------- */
@@ -284,7 +265,7 @@ h1 em {
 .pig__snout { fill: var(--hot-lit); }
 
 .pig__nostril { fill: var(--pig-shade); }
-.pig__eye { fill: var(--on-flame); opacity: 0.85; }
+.pig__eye { fill: var(--on-hot); opacity: 0.85; }
 
 .pig__slot { fill: var(--pig-slot); }
 
@@ -493,22 +474,13 @@ h1 em {
 }
 
 .total {
-  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
-  font-size: clamp(50px, 15vw, 88px);
+  font-family: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: clamp(52px, 15vw, 92px);
   line-height: 1;
-  font-weight: 700;
+  font-weight: 300;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   color: var(--coral);
-}
-
-@supports (-webkit-background-clip: text) or (background-clip: text) {
-  .total {
-    background: var(--flame);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
 }
 
 /* Kicks when the figure changes, so the number feels earned. */
@@ -541,23 +513,8 @@ h1 em {
   inset: 0 auto 0 0;
   width: 0;
   border-radius: 999px;
-  background: var(--flame);
+  background: var(--hot);
   transition: width 620ms var(--spring);
-}
-
-/* A slow travelling highlight, so the bar reads as live rather than painted. */
-.fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(100deg, transparent 20%, #ffffff5c 50%, transparent 80%);
-  animation: sheen 2.8s linear infinite;
-}
-
-@keyframes sheen {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
 }
 
 /* ---------- pace ---------------------------------------------------------
@@ -584,7 +541,7 @@ h1 em {
 
 .pace__verdict {
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bone);
@@ -629,9 +586,9 @@ h1 em {
 }
 
 .stat b {
-  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  font-family: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: clamp(13px, 3.7vw, 17px);
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -666,9 +623,8 @@ h1 em {
 }
 
 .railbar__total {
-  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
   font-size: 26px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -693,7 +649,7 @@ h1 em {
 .railbar__fill {
   height: 100%;
   width: 0;
-  background: linear-gradient(90deg, var(--hot), var(--warn));
+  background: var(--hot);
   transition: width 420ms var(--ease);
 }
 
@@ -747,9 +703,9 @@ h1 em {
    every column count instead of guessing from the viewport. */
 .cell .n { font-size: clamp(8px, 15cqw, 11px); color: var(--muted); letter-spacing: 0.04em; line-height: 1; }
 .cell .amt {
-  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
-  font-size: clamp(12px, 28cqw, 21px);
-  font-weight: 700;
+  font-family: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: clamp(12px, 27cqw, 20px);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
   line-height: 1;
@@ -769,12 +725,12 @@ h1 em {
 }
 
 .cell[aria-pressed="true"] {
-  background: var(--flame);
+  background: var(--hot);
   border-color: transparent;
   box-shadow: var(--glow);
   /* The amount inherits cell colour, and --bone inverts between themes — this
      is set against the gradient, which does not. */
-  color: var(--on-flame);
+  color: var(--on-hot);
 }
 
 /* One overshoot on the tap that filled it. */
@@ -787,7 +743,7 @@ h1 em {
 }
 
 .cell[aria-pressed="true"] .n,
-.cell[aria-pressed="true"] .d { color: var(--on-flame-dim); }
+.cell[aria-pressed="true"] .d { color: var(--on-hot-dim); }
 .cell[aria-pressed="true"]::after { background: var(--warn); opacity: 1; }
 
 .cell.today { border-color: var(--warn); }
@@ -885,8 +841,8 @@ h1 em {
 }
 
 .btn--danger.is-armed {
-  color: var(--on-flame);
-  background: var(--flame);
+  color: var(--on-hot);
+  background: var(--hot);
   border-color: transparent;
   box-shadow: var(--glow);
 }
@@ -934,9 +890,8 @@ h1 em {
 }
 
 .sheet__title {
-  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
-  font-weight: 600;
-  font-size: 26px;
+  font-weight: 500;
+  font-size: 24px;
   line-height: 1;
   margin: 0;
 }
@@ -982,9 +937,9 @@ h1 em {
 }
 
 .btn--primary {
-  background: var(--flame);
+  background: var(--hot);
   border-color: transparent;
-  color: var(--on-flame);
+  color: var(--on-hot);
   box-shadow: var(--glow);
 }
 
@@ -1175,30 +1130,30 @@ h1 em {
   }
 }
 
-/* The milestone banner that rides with it. */
+/* The milestone banner.
+   This used to be gradient-clipped text in the same colour family as the
+   squares, floating straight over them — which made it read as a smear of the
+   grid rather than a word. It sits on its own opaque card now, so it is
+   legible over whatever happens to be behind it. */
 .cheer {
   position: fixed;
   left: 50%;
-  top: 38%;
+  top: 34%;
   z-index: 71;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  font-family: "Fredoka", ui-rounded, "Segoe UI", system-ui, sans-serif;
-  font-weight: 700;
-  font-size: clamp(28px, 9vw, 52px);
-  letter-spacing: -0.02em;
-  color: var(--coral);
+  background: var(--panel);
+  border: 1px solid var(--line-lit);
+  border-radius: 999px;
+  box-shadow: 0 18px 40px -18px #00000099;
+  padding: 14px clamp(22px, 7vw, 36px);
+  font-weight: 500;
+  font-size: clamp(22px, 6.5vw, 34px);
+  letter-spacing: -0.01em;
+  color: var(--bone);
+  white-space: nowrap;
   text-align: center;
   animation: cheer-pop 1500ms var(--spring) forwards;
-}
-
-@supports (-webkit-background-clip: text) or (background-clip: text) {
-  .cheer {
-    background: var(--flame);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
 }
 
 @keyframes cheer-pop {
