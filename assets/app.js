@@ -297,7 +297,6 @@ function paintPace(marked) {
 }
 
 function renderStatic() {
-  el("goalHeadline").textContent = money.format(GOAL);
   el("goalInline").textContent = money.format(GOAL);
   el("lastDayNum").textContent = String(DAYS);
   el("startLabel").textContent = longDate.format(dateFor(1));
@@ -441,7 +440,7 @@ el("share").addEventListener("click", async () => {
   // Native share sheet on phones, clipboard everywhere else.
   if (navigator.share) {
     try {
-      await navigator.share({ title: "100-Day Savings Challenge", url });
+      await navigator.share({ title: "100 Days to Less Broke", url });
       return;
     } catch (err) {
       if (err && err.name === "AbortError") return;
