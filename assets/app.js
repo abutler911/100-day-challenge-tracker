@@ -711,10 +711,33 @@ function watchRail() {
    Boot
    ------------------------------------------------------------------------- */
 
+/**
+ * Open at the top, every time.
+ *
+ * Two separate things used to prevent that. The app scrolled itself to today's
+ * square on first paint, and the browser restores the previous scroll offset
+ * on a reload or when an installed app is resumed — which lands you partway
+ * down a hundred-square grid with the headline and the total off screen. The
+ * auto-scroll is gone and restoration is turned off; `Today` is still one tap
+ * away when you do want to jump.
+ */
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+function toTop() {
+  window.scrollTo(0, 0);
+}
+
+toTop();
+// Layout settles after the grid is built and the fonts swap in, and a restore
+// can land after this script runs, so claim the top again on the way out.
+window.addEventListener("load", () => requestAnimationFrame(toTop));
+
 renderStatic();
 buildGrid();
 render();
 watchRail();
+
+requestAnimationFrame(toTop);
 
 createSync({
   config: FIREBASE_CONFIG,
@@ -730,13 +753,6 @@ createSync({
 }).then((instance) => {
   sync = instance;
   for (const [day, on] of buffered.splice(0)) sync.setDay(day, on);
-
-  // Land on today on first paint, so a phone opens where you actually are.
-  if (today) {
-    requestAnimationFrame(() =>
-      cells.get(today).scrollIntoView({ block: "center", behavior: "auto" })
-    );
-  }
 });
 
 // A share link opened in an already-running tab should switch rooms.
