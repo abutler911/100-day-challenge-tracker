@@ -120,7 +120,11 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => cached);
+        // Nothing cached and the network refused: `cached` is undefined here,
+        // and resolving respondWith with undefined makes the browser fail the
+        // request outright rather than letting it fall back. A browser that
+        // blocks Google Fonts hits this on every face.
+        .catch(() => cached || Response.error());
 
       return cached || network;
     })
