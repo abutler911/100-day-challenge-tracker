@@ -186,30 +186,39 @@ Under the progress bar sits a line comparing two different answers to "what
 day are we on":
 
 - **Calendar day** — how far along the start date says you should be.
-- **Pace day** — the day your banked total actually corresponds to. The
-  challenge is a fixed ladder, `$1 + $2 + … + $N`, so any total maps to a day:
-  the largest `N` whose ladder still fits inside it.
+- **Your day** — how many squares you have actually retired. Tick sixteen and
+  you are through day sixteen, whichever sixteen they were.
 
-They only match if you pay in order. Drop $100 in on day 10 and you'll tick
-off squares totalling $100 — which is what someone on **day 13** would have
-banked, since thirteen days cost $91. So the line reads *3 days ahead*, and
-your squares no longer say anything about the date.
+Paying out of order pulls these apart. Say you start today with $297 spare and
+clear the three most expensive squares — 100, 99 and 98. That is three days of
+progress on day one, so:
 
 ```
-● 3 DAYS AHEAD
-  Day 10 by the calendar · day 13 by the money
+● 2 DAYS AHEAD
+  Day 1 today · you're on day 3, Aug 15
 ```
 
-Behind, it tells you the number that closes the gap instead:
+Fall behind and it reads the same way in the other direction:
 
 ```
-● 10 DAYS BEHIND
-  Day 10 by the calendar · $55 to catch up
+● 4 DAYS BEHIND
+  Day 10 today · you're on day 6, Aug 18
 ```
 
-Amber inside a week, crimson past it. Before day 1 it says how long until the
-start rather than reporting you as behind, and once every square is marked it
-reads *Fully funded* regardless of the date.
+Amber inside a week, crimson past it. Before day 1 it counts down to the start
+rather than reporting a deficit, and once all hundred are ticked it reads *All
+done* whatever the date says.
+
+### Why squares and not dollars
+
+Both are defensible, and this deliberately counts squares.
+
+The challenge ends when all hundred are ticked, in whatever order — so the
+count is what tells you whether it will finish on time. Dollars answer a
+different question, and diverge sharply: those three expensive squares are
+$297, which by money looks like being weeks ahead when it is three days of
+progress. Nine cheap squares are $45 and nine days of progress. If what you
+want to know is "will we get there", the count is the honest number.
 
 ## 5. Light and dark
 
