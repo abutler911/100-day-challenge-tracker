@@ -10,12 +10,24 @@ index.html              markup
 assets/app.css          all styling, mobile-first
 assets/app.js           grid, rendering, actions
 assets/sync.js          Firebase / localStorage sync
+assets/theme.js         light/dark, resolved before first paint
 assets/config.js        the only file you need to edit
+assets/fonts/           self-hosted woff2, six faces
 database.rules.json     Firebase security rules
 sw.js                   offline shell
 ```
 
 No build step, no dependencies to install. It's a static site.
+
+The fonts are served from this repo rather than from Google. Browsers with
+tracking or fingerprinting protection block `fonts.gstatic.com` at the network
+layer, which no header can work around, and the page quietly loses its
+typography. Self-hosting also drops two hosts from the CSP and two handshakes
+from a cold load. Both families are SIL Open Font License 1.1; the licences sit
+beside the files.
+
+The one remaining third party is the Firebase SDK, loaded from `gstatic.com` at
+a pinned version.
 
 ---
 

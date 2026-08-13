@@ -9,7 +9,7 @@
 /* Bump on every release that changes a shell file. The caches below are keyed
    by it, so a bump is what evicts stale copies — without one, a deploy can be
    served from the previous version's cache for a load or more. */
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -25,14 +25,17 @@ const SHELL_FILES = [
   "./assets/icons/icon.svg",
   "./assets/icons/icon-192.png",
   "./assets/icons/apple-touch-icon.png",
+  "./assets/fonts/jetbrains-mono-latin-400-normal.woff2",
+  "./assets/fonts/jetbrains-mono-latin-500-normal.woff2",
+  "./assets/fonts/jetbrains-mono-latin-700-normal.woff2",
+  "./assets/fonts/cormorant-garamond-latin-400-normal.woff2",
+  "./assets/fonts/cormorant-garamond-latin-400-italic.woff2",
+  "./assets/fonts/cormorant-garamond-latin-600-normal.woff2",
 ];
 
-/** Hosts we cache opportunistically: fonts and the versioned Firebase SDK. */
-const CACHEABLE_HOSTS = new Set([
-  "fonts.googleapis.com",
-  "fonts.gstatic.com",
-  "www.gstatic.com",
-]);
+/** The only third party left is the version-pinned Firebase SDK. Fonts are
+ *  served from our own origin now, so they go through the same-origin path. */
+const CACHEABLE_HOSTS = new Set(["www.gstatic.com"]);
 
 /** Live traffic: never intercepted. */
 function isLive(url) {
@@ -89,6 +92,28 @@ self.addEventListener("fetch", (event) => {
   const sameOrigin = url.origin === self.location.origin;
   if (!sameOrigin && !CACHEABLE_HOSTS.has(url.hostname)) return;
 
+  // Fonts never change under a given filename, so there is nothing to
+  // revalidate — going to the network first would just cost a round trip per
+  // face on every load.
+  if (sameOrigin && url.pathname.includes("/assets/fonts/")) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) =>
+          cached ||
+          fetch(request)
+            .then((response) => {
+              if (response && response.ok) {
+                const copy = response.clone();
+                caches.open(SHELL).then((cache) => cache.put(request, copy));
+              }
+              return response;
+            })
+            .catch(() => Response.error())
+      )
+    );
+    return;
+  }
+
   // Our own code and styles: network first, cache only as the offline
   // fallback. Stale-while-revalidate would serve the previous deploy's copy
   // for a load after every release — which is how a filled-in config.js can
@@ -108,8 +133,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Fonts and the version-pinned Firebase SDK never change under a given URL,
-  // so serve those from cache and refresh in the background.
+  // The version-pinned Firebase SDK never changes under a given URL, so serve
+  // it from cache and refresh in the background.
   event.respondWith(
     caches.match(request).then((cached) => {
       const network = fetch(request)
@@ -122,8 +147,7 @@ self.addEventListener("fetch", (event) => {
         })
         // Nothing cached and the network refused: `cached` is undefined here,
         // and resolving respondWith with undefined makes the browser fail the
-        // request outright rather than letting it fall back. A browser that
-        // blocks Google Fonts hits this on every face.
+        // request outright instead of surfacing a normal network error.
         .catch(() => cached || Response.error());
 
       return cached || network;

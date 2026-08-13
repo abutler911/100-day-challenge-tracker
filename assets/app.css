@@ -4,6 +4,61 @@
    opened up at wider breakpoints.
    ========================================================================== */
 
+/* Self-hosted rather than loaded from Google. Browsers with tracking or
+   fingerprinting protection block fonts.gstatic.com outright — the request
+   fails at the network layer, so no header or CSP change can rescue it, and
+   the page silently drops to fallback faces. Serving them from our own origin
+   removes the third-party dependency, the extra DNS and TLS handshakes, and
+   two hosts from the CSP.
+
+   Latin subsets only, and only the six faces the styles below ask for; 148KB
+   total, cached immutably. Both families are SIL Open Font License 1.1 —
+   see the LICENSE files alongside the woff2s. */
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/jetbrains-mono-latin-700-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/cormorant-garamond-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./fonts/cormorant-garamond-latin-600-normal.woff2") format("woff2");
+}
+
 /* Palette tokens are named for the dark original, but they carry roles, not
    literal colours: --ink is the page ground and --bone the primary text, in
    both themes. theme.js always stamps an explicit data-theme on <html> before
