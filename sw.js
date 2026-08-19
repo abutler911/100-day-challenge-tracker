@@ -9,7 +9,7 @@
 /* Bump on every release that changes a shell file. The caches below are keyed
    by it, so a bump is what evicts stale copies — without one, a deploy can be
    served from the previous version's cache for a load or more. */
-const VERSION = "v5";
+const VERSION = "v6";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 

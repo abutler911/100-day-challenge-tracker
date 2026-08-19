@@ -990,6 +990,68 @@ h1 em {
   .sheet__actions .btn { padding: 10px 20px; }
 }
 
+/* ---------- room sheet -------------------------------------------------- */
+
+.room__current,
+.room__join {
+  display: grid;
+  gap: 8px;
+}
+
+/* Reads as a caption rather than a heading — same treatment the stat labels
+   get, so the sheet doesn't grow a second title. */
+.room__label {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Selectable as one unit. On a phone the reliable way to move this across is
+   press-and-hold, and dragging a selection over eighteen random characters is
+   not something anyone should have to get right. Monospace because the whole
+   point is telling l from 1 while reading it off someone else's screen. */
+.room__code {
+  display: block;
+  padding: 12px;
+  background: var(--panel-lit);
+  border: 1px solid var(--line);
+  color: var(--bone);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  -webkit-user-select: all;
+  user-select: all;
+}
+
+.room__send {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+}
+
+.room__input {
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* Which half of the sheet is on show. Hiding rather than rebuilding keeps one
+   join path for both modes. */
+.sheet[data-mode="first-run"] .room__current,
+.sheet[data-mode="first-run"] #roomClose,
+.sheet[data-mode="manage"] #roomFresh {
+  display: none;
+}
+
+.sheet[data-mode="manage"] .room__join {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
 .toast {
   position: fixed;
   left: 50%;

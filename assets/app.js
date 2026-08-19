@@ -97,28 +97,81 @@ function randomRoom() {
   return Array.from(bytes, (b) => b.toString(36).padStart(2, "0")).join("").slice(0, 18);
 }
 
-/** Precedence: share link, then a pinned config room, then whatever this
- *  device used last, then a fresh one. */
+/** A room ID is a path segment under `rooms/`, so it has to keep clear of the
+ *  characters Firebase forbids in a key. */
+const ROOM_SHAPE = /^[A-Za-z0-9_-]{4,64}$/;
+
+/**
+ * Reads a room out of whatever someone can actually lay hands on: a whole
+ * share link, the `#r=...` fragment off one, or the bare code read aloud from
+ * the other phone. Null for anything that is none of those.
+ */
+function parseRoom(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return null;
+
+  const cut = raw.indexOf("#");
+  const fromLink = cut === -1 ? null : new URLSearchParams(raw.slice(cut + 1)).get("r");
+  const candidate = (fromLink ?? raw).trim();
+
+  return ROOM_SHAPE.test(candidate) ? candidate : null;
+}
+
+/**
+ * Precedence: share link, then a pinned config room, then whatever this device
+ * used last. Null means we genuinely do not know which room this is.
+ *
+ * That last case used to mint a fresh room on the spot — a fair guess in a
+ * browser and the wrong one everywhere else. An app added to an iPhone home
+ * screen gets storage of its own, separate from Safari's, and it launches at
+ * the manifest's start_url with no `#r=...` on it. So a phone that had opened
+ * the share link twenty times still arrived here knowing nothing, was handed a
+ * brand new room, and showed a hundred empty squares that read as a wiped
+ * tracker. Asking beats guessing.
+ */
 function resolveRoom() {
-  const fromHash = new URLSearchParams(location.hash.slice(1)).get("r");
+  const fromHash = parseRoom(location.hash);
   if (fromHash) {
     localStorage.setItem(ROOM_STORE, fromHash);
     return fromHash;
   }
   if (ROOM_ID) return ROOM_ID;
-
-  const stored = localStorage.getItem(ROOM_STORE);
-  if (stored) return stored;
-
-  const fresh = randomRoom();
-  localStorage.setItem(ROOM_STORE, fresh);
-  return fresh;
+  return localStorage.getItem(ROOM_STORE) || null;
 }
 
-const room = resolveRoom();
+let room = resolveRoom();
+
+/* With no backend a room is only a local storage key — nobody to share it
+   with, no code to paste — so asking which one to open would be a question
+   with no meaning. */
+if (!room && !isConfigured(FIREBASE_CONFIG)) {
+  room = randomRoom();
+  localStorage.setItem(ROOM_STORE, room);
+}
+
+/** True in an installed home-screen app, where the storage split above bites
+ *  and there is no address bar to paste a link into. */
+function isInstalled() {
+  return (
+    window.navigator.standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches
+  );
+}
 
 function shareUrl() {
   return `${location.origin}${location.pathname}#r=${encodeURIComponent(room)}`;
+}
+
+/**
+ * Switching rooms rewires the sync listeners, the cache keys, the start date
+ * and all hundred squares at once. Reloading is the shortest way to do that
+ * and the only one with no chance of a listener from the old room landing a
+ * write in the new one.
+ */
+function adoptRoom(id) {
+  localStorage.setItem(ROOM_STORE, id);
+  location.hash = `r=${encodeURIComponent(id)}`;
+  location.reload();
 }
 
 /* -------------------------------------------------------------------------
@@ -561,13 +614,92 @@ function toast(message) {
   toastTimer = setTimeout(() => toastEl.classList.remove("is-visible"), 2800);
 }
 
-el("share").addEventListener("click", async () => {
-  const url = shareUrl();
+/* ---------- room -------------------------------------------------------- */
 
+/* One sheet doing two jobs, because they are the same job asked at different
+   moments: which room is this, and how does the other phone get into it. */
+
+const roomDialog = el("roomDialog");
+const roomInput = el("roomInput");
+const roomError = el("roomError");
+
+const ROOM_COPY = {
+  "first-run": {
+    title: "Which tracker is this?",
+    action: "Join the other phone's room",
+    note: isInstalled()
+      ? "Added to your home screen? It gets storage of its own, separate from the browser, so it starts out knowing nothing — even if you have opened the share link there plenty of times. Paste the code from the other phone once and it sticks."
+      : "Squares live in a room, and both phones have to be in the same one. Paste the link or code from the other phone to join it, or start a tracker of your own.",
+  },
+  manage: {
+    title: "Room",
+    action: "Switch to another room",
+    note: "Anyone holding this code sees the same squares you do. Send the link when the other phone can open one — the code is for when it can't, like an app on a home screen with no address bar to paste into.",
+  },
+};
+
+function openRoom(mode) {
+  const copy = ROOM_COPY[mode];
+  roomDialog.dataset.mode = mode;
+  el("roomTitle").textContent = copy.title;
+  el("roomNote").textContent = copy.note;
+  el("roomJoinLabel").textContent = copy.action;
+  el("roomCode").textContent = room || "—";
+  roomInput.value = "";
+  roomError.hidden = true;
+  roomDialog.showModal();
+}
+
+function showRoomError(message) {
+  roomError.textContent = message;
+  roomError.hidden = false;
+}
+
+/* Nothing works until a room is picked, so the first-run sheet has no way out
+   — Escape included, which a dialog otherwise honours for free. */
+roomDialog.addEventListener("cancel", (event) => {
+  if (roomDialog.dataset.mode === "first-run") event.preventDefault();
+});
+
+el("share").addEventListener("click", () => openRoom("manage"));
+el("roomClose").addEventListener("click", () => roomDialog.close());
+el("roomFresh").addEventListener("click", () => adoptRoom(randomRoom()));
+
+el("roomForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const next = parseRoom(roomInput.value);
+  if (!next) {
+    showRoomError("That isn't a share link or a room code.");
+    return;
+  }
+  if (next === room) {
+    roomDialog.close();
+    toast("Already in that room.");
+    return;
+  }
+  adoptRoom(next);
+});
+
+el("roomCopy").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(room);
+    toast("Code copied.");
+    buzz(8);
+  } catch {
+    // Blocked or unavailable. The code is selectable text, so there is still
+    // a way to take it by hand.
+    toast("Copy blocked — press and hold the code to select it.");
+  }
+});
+
+el("roomSend").addEventListener("click", async () => {
   if (!isConfigured(FIREBASE_CONFIG)) {
     toast("Sharing needs Firebase set up first — see README.md.");
     return;
   }
+
+  const url = shareUrl();
 
   // Native share sheet on phones, clipboard everywhere else.
   if (navigator.share) {
@@ -739,25 +871,32 @@ watchRail();
 
 requestAnimationFrame(toTop);
 
-createSync({
-  config: FIREBASE_CONFIG,
-  roomId: room,
-  onState(next) {
-    state = next;
-    render();
-  },
-  onStatus: paintStatus,
-  onMeta(meta) {
-    if (meta && meta.startDate) applyStart(meta.startDate);
-  },
-}).then((instance) => {
-  sync = instance;
-  for (const [day, on] of buffered.splice(0)) sync.setDay(day, on);
-});
+/* The grid is painted either way. Behind the first-run sheet it is a hundred
+   empty squares, which is exactly what the sheet is there to explain. */
+if (room) {
+  createSync({
+    config: FIREBASE_CONFIG,
+    roomId: room,
+    onState(next) {
+      state = next;
+      render();
+    },
+    onStatus: paintStatus,
+    onMeta(meta) {
+      if (meta && meta.startDate) applyStart(meta.startDate);
+    },
+  }).then((instance) => {
+    sync = instance;
+    for (const [day, on] of buffered.splice(0)) sync.setDay(day, on);
+  });
+} else {
+  paintStatus({ mode: "local", state: "local", reason: "no-room" });
+  openRoom("first-run");
+}
 
 // A share link opened in an already-running tab should switch rooms.
 window.addEventListener("hashchange", () => {
-  const next = new URLSearchParams(location.hash.slice(1)).get("r");
+  const next = parseRoom(location.hash);
   if (next && next !== room) location.reload();
 });
 
