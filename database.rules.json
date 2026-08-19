@@ -21,6 +21,16 @@
           "$other": { ".validate": false }
         },
 
+        "messages": {
+          "$id": {
+            ".validate": "newData.hasChildren(['at', 'by', 'text'])",
+            "at": { ".validate": "newData.isNumber()" },
+            "by": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24" },
+            "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500" },
+            "$other": { ".validate": false }
+          }
+        },
+
         "$other": { ".validate": false }
       }
     }

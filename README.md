@@ -240,7 +240,33 @@ $297, which by money looks like being weeks ahead when it is three days of
 progress. Nine cheap squares are $45 and nine days of progress. If what you
 want to know is "will we get there", the count is the honest number.
 
-## 5. Light and dark
+## 5. Leaving each other notes
+
+At the bottom of the page, under the grid, is a small board the two of you
+share. Type a note, hit send, and it turns up on the other phone the same way
+a marked square does — live, no refresh.
+
+The first note asks what to sign it with. That name lives on the device, not in
+the room: it is only there so a note reads as being *from* someone, and it is
+what decides which side of the board a note sits on. Change it any time from
+**Notes → your name**.
+
+It is a note board, not a messenger. No notifications, no read receipts, no
+typing indicators, and only the last 100 notes are kept — the older ones scroll
+off. Notes are 500 characters each. A note written with no signal is queued on
+the device and sent when there is signal again, the same as a marked square.
+
+> **If you set this up before the note board existed, republish the rules.**
+> Sending a note writes to a `messages` node that older copies of
+> `database.rules.json` reject outright. The symptom is the status chip turning
+> to **Sync error** and notes sitting greyed out as *sending* forever. Fix it
+> by pasting the current [`database.rules.json`](database.rules.json) into
+> **Realtime Database → Rules** and hitting **Publish**. Marked squares are
+> unaffected either way.
+
+---
+
+## 6. Light and dark
 
 The circle button next to the status chip cycles **match the system → light →
 dark**, and remembers the choice on that device. It defaults to following the
@@ -261,6 +287,9 @@ the other's choice.
 - **Offline-tolerant.** Every tap is queued in `localStorage` *before* the
   network is touched, so a change made in a dead zone survives closing the app
   and replays on reconnect. The chip reads **Offline** with a queued count.
+  Notes ride the same queue: each one is given its final id on the device
+  before anything is sent, so replaying a queued note overwrites its own slot
+  rather than arriving twice.
 - **Conflicts.** Last write wins, per day. Two people toggling the same square
   in the same second is the only way to notice, and the loser is one tap.
 - **Cold start.** The last server snapshot is cached, so opening the app shows
@@ -294,6 +323,11 @@ allowlist:
   }
 }
 ```
+
+Keep the `days`, `meta` and `messages` validation blocks from
+[`database.rules.json`](database.rules.json) underneath — this snippet only
+replaces the two access lines. Dropping them takes the shape checks with it,
+and without the `messages` block notes are refused outright.
 
 That also means adding a sign-in screen, which this build doesn't have.
 

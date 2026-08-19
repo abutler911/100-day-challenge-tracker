@@ -990,6 +990,180 @@ h1 em {
   .sheet__actions .btn { padding: 10px 20px; }
 }
 
+/* ---------- note board -------------------------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.board {
+  margin: 28px 0 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.board__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.board__title {
+  margin: 0;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.board__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.board__who svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.board__who:focus-visible { outline: 2px solid var(--warn); outline-offset: 3px; }
+
+/* Scrolls inside itself. The page is already a hundred squares long, and a
+   board that grew the page would put the action bar further away with every
+   note. The min-height keeps an empty board from collapsing to nothing. */
+.board__log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 96px;
+  max-height: 44vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.board__empty {
+  margin: auto 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  text-align: center;
+}
+
+.board__day {
+  margin: 6px 0 2px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-self: flex-start;
+  /* Long enough to read, short enough that the sides stay legible as sides. */
+  max-width: min(80%, 420px);
+  padding: 8px 11px;
+  background: var(--panel-lit);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  /* Square off the corner nearest the speaker — the one cue that survives
+     when both bubbles carry the same colour. */
+  border-bottom-left-radius: var(--r-sm);
+}
+
+.msg--mine {
+  align-self: flex-end;
+  background: var(--hot);
+  border-color: transparent;
+  color: var(--on-hot);
+  border-bottom-left-radius: var(--r-md);
+  border-bottom-right-radius: var(--r-sm);
+}
+
+/* Queued, not delivered. Dimmed rather than badged, so it settles without the
+   layout shifting when the write lands. */
+.msg.is-pending { opacity: 0.55; }
+
+.msg__meta {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.msg--mine .msg__meta { color: var(--on-hot-dim); }
+
+.msg__text {
+  font-size: 14px;
+  line-height: 1.5;
+  /* A pasted URL or a long unbroken run must not stretch the bubble past the
+     board and take the page's horizontal scroll with it. */
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.board__compose {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.board__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--bone);
+  font-family: inherit;
+  font-size: 16px; /* iOS zooms the page on focus below 16px. */
+}
+
+.board__input::placeholder { color: var(--muted); }
+.board__input:focus-visible { outline: 2px solid var(--warn); outline-offset: 1px; }
+
+.board__send {
+  flex: none;
+  width: 52px;
+  padding: 7px;
+}
+
 /* ---------- room sheet -------------------------------------------------- */
 
 .room__current,
