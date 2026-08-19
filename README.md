@@ -120,12 +120,31 @@ Deploy.
 Then:
 
 1. Open the deployed URL on your phone.
-2. Tap **Share**. On a phone this opens the native share sheet; on a desktop it
-   copies the link.
+2. Tap **Share** → **Send link**. On a phone this opens the native share sheet;
+   on a desktop it copies the link.
 3. Send it to your wife. Opening that link puts her device in the same room.
 4. Both of you: **Add to Home Screen** (iOS: Share → Add to Home Screen;
    Android: menu → Install app). It installs as a standalone app with its own
    icon, no browser chrome.
+5. In the installed app, tap **Share** and paste the room code once — see
+   below for why.
+
+### The room code, and why the installed app asks for it
+
+An app added to an iPhone home screen gets storage of its own, separate from
+Safari's, and it launches at the manifest's `start_url` — which carries no
+`#r=…` fragment. Between them, those two facts mean a home-screen install
+starts out knowing nothing about your room however many times the share link
+has been opened in the browser.
+
+So the app asks instead of guessing. Open it somewhere that has never seen a
+room and it offers a choice: join one, or start fresh. Tap **Share** on the
+phone that already has your ledger, read off **this room's code**, and type it
+into the new one. It is remembered from then on.
+
+The same sheet is how you move an install that has already started a room of
+its own onto the right one — paste the code under **switch to another room**.
+Squares marked in the wrong room stay there; they are not merged.
 
 ### Skipping the share link
 

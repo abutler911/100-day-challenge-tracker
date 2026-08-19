@@ -193,6 +193,40 @@
   </form>
 </dialog>
 
+<!-- Room sheet. `data-mode` picks which half shows: `first-run` when no room
+     is known yet and one has to be chosen, `manage` for the standing "who else
+     is in here" surface behind the Share button. -->
+<dialog class="sheet" id="roomDialog" data-mode="manage" aria-labelledby="roomTitle">
+  <div class="sheet__inner">
+    <h2 class="sheet__title" id="roomTitle">Room</h2>
+    <p class="sheet__note" id="roomNote"></p>
+
+    <div class="room__current">
+      <span class="room__label">This room's code</span>
+      <code class="room__code" id="roomCode">—</code>
+      <div class="room__send">
+        <button type="button" class="btn btn--ghost" id="roomCopy"><span>Copy code</span></button>
+        <button type="button" class="btn btn--primary" id="roomSend"><span>Send link</span></button>
+      </div>
+    </div>
+
+    <form class="room__join" id="roomForm">
+      <label class="room__label" for="roomInput" id="roomJoinLabel">Switch to another room</label>
+      <!-- Autocorrect and capitalisation would quietly mangle a random code on
+           a phone keyboard, and anything under 16px makes iOS zoom the page. -->
+      <input type="text" class="sheet__date room__input" id="roomInput"
+             placeholder="Paste a link or code"
+             autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+      <p class="sheet__error" id="roomError" role="alert" hidden></p>
+      <div class="sheet__actions">
+        <button type="button" class="btn btn--ghost" id="roomFresh"><span>Start fresh</span></button>
+        <button type="button" class="btn btn--ghost" id="roomClose"><span>Close</span></button>
+        <button type="submit" class="btn btn--primary" id="roomGo"><span>Join</span></button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <noscript>
