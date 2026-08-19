@@ -1,5 +1,5 @@
 import { FIREBASE_CONFIG, CHALLENGE, ROOM_ID } from "./config.js";
-import { createSync, isConfigured } from "./sync.js";
+import { createSync, isConfigured, MESSAGE_MAX } from "./sync.js";
 
 /* -------------------------------------------------------------------------
    Challenge maths and dates
@@ -99,7 +99,7 @@ function randomRoom() {
 
 /** A room ID is a path segment under `rooms/`, so it has to keep clear of the
  *  characters Firebase forbids in a key. */
-const ROOM_SHAPE = /^[A-Za-z0-9_-]{4,64}$/;
+const ROOM_SHAPE = /^[A-Za-z0-9_-]{6,64}$/;
 
 /**
  * Reads a room out of whatever someone can actually lay hands on: a whole
@@ -826,6 +826,164 @@ resetBtn.addEventListener("click", () => {
 });
 
 /* -------------------------------------------------------------------------
+   Note board
+   ------------------------------------------------------------------------- */
+
+/* Who you are is a per-device label, not a room setting: the room is shared,
+   so a name stored in it would be the same on both phones. Nothing depends on
+   it being unique or true — it is there so a note reads as being from someone.
+   Bubbles pick their side by comparing it, which is why saving a name
+   re-renders the log. */
+const NAME_STORE = "savings100:name";
+
+const boardLog = el("boardLog");
+const boardInput = el("boardInput");
+
+let myName = (localStorage.getItem(NAME_STORE) || "").trim();
+let messages = [];
+
+const clockTime = new Intl.DateTimeFormat(CHALLENGE.locale, {
+  hour: "numeric",
+  minute: "2-digit",
+});
+const dayHeading = new Intl.DateTimeFormat(CHALLENGE.locale, {
+  weekday: "long",
+  month: "short",
+  day: "numeric",
+});
+
+function paintWho() {
+  el("boardWhoName").textContent = myName || "Set your name";
+}
+
+/** Pinned to the newest note while you are already at the end, and left alone
+ *  while you are reading back through older ones. */
+function atNewest() {
+  return boardLog.scrollHeight - boardLog.scrollTop - boardLog.clientHeight < 60;
+}
+
+function renderMessages() {
+  const stick = atNewest();
+  boardLog.textContent = "";
+
+  if (!messages.length) {
+    const empty = document.createElement("p");
+    empty.className = "board__empty";
+    empty.textContent = "Nothing yet. Leave a note — it turns up on the other phone.";
+    boardLog.appendChild(empty);
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  let lastStamp = "";
+
+  for (const note of messages) {
+    const when = new Date(note.at);
+
+    // A bare clock time is ambiguous the moment a note is more than a day old.
+    const stamp = toISO(when);
+    if (stamp !== lastStamp) {
+      lastStamp = stamp;
+      const divider = document.createElement("p");
+      divider.className = "board__day";
+      divider.textContent = dayHeading.format(when);
+      frag.appendChild(divider);
+    }
+
+    const row = document.createElement("div");
+    row.className =
+      "msg" + (note.by === myName ? " msg--mine" : "") + (note.pending ? " is-pending" : "");
+
+    const meta = document.createElement("span");
+    meta.className = "msg__meta";
+    meta.textContent = note.pending ? `${note.by} · sending` : `${note.by} · ${clockTime.format(when)}`;
+
+    // textContent throughout: a note is whatever the other person typed, and
+    // it is never markup.
+    const body = document.createElement("span");
+    body.className = "msg__text";
+    body.textContent = note.text;
+
+    row.append(meta, body);
+    frag.appendChild(row);
+  }
+
+  boardLog.appendChild(frag);
+  if (stick) boardLog.scrollTop = boardLog.scrollHeight;
+}
+
+/* ---------- your name --------------------------------------------------- */
+
+const nameDialog = el("nameDialog");
+const nameInput = el("nameInput");
+const nameError = el("nameError");
+
+/** Set when the sheet was raised mid-send, so the note goes out once there is
+ *  a name to sign it with. */
+let afterName = null;
+
+function askName(then) {
+  afterName = then || null;
+  nameInput.value = myName;
+  nameError.hidden = true;
+  nameDialog.showModal();
+}
+
+el("boardWho").addEventListener("click", () => askName(null));
+
+el("nameCancel").addEventListener("click", () => {
+  afterName = null;
+  nameDialog.close();
+});
+
+el("nameForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const next = nameInput.value.trim().replace(/\s+/g, " ");
+  if (!next) {
+    nameError.textContent = "Something to sign with — a first name is plenty.";
+    nameError.hidden = false;
+    return;
+  }
+
+  myName = next;
+  localStorage.setItem(NAME_STORE, myName);
+  paintWho();
+  renderMessages();
+  nameDialog.close();
+
+  const then = afterName;
+  afterName = null;
+  if (then) then();
+});
+
+/* ---------- sending ----------------------------------------------------- */
+
+const boardForm = el("boardForm");
+
+boardForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const text = boardInput.value.trim();
+  if (!text) return;
+
+  // Asking for a name up front would be a wall in front of a savings tracker.
+  // Asking at the first note is the moment it actually means something.
+  if (!myName) {
+    askName(() => boardForm.requestSubmit());
+    return;
+  }
+  if (!sync) {
+    toast("Still opening the room — try that again in a moment.");
+    return;
+  }
+
+  boardInput.value = "";
+  sync.sendMessage({ at: Date.now(), by: myName, text: text.slice(0, MESSAGE_MAX) });
+  buzz(8);
+});
+
+/* -------------------------------------------------------------------------
    Condensed rail
    ------------------------------------------------------------------------- */
 
@@ -867,6 +1025,8 @@ window.addEventListener("load", () => requestAnimationFrame(toTop));
 renderStatic();
 buildGrid();
 render();
+paintWho();
+renderMessages();
 watchRail();
 
 requestAnimationFrame(toTop);
@@ -884,6 +1044,10 @@ if (room) {
     onStatus: paintStatus,
     onMeta(meta) {
       if (meta && meta.startDate) applyStart(meta.startDate);
+    },
+    onMessages(next) {
+      messages = next;
+      renderMessages();
     },
   }).then((instance) => {
     sync = instance;

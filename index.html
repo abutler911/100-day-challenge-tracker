@@ -143,6 +143,30 @@
     <div class="grid" id="grid" role="group" aria-label="100 day savings grid"></div>
   </main>
 
+  <!-- A note board rather than a chat: two people, one room, no notifications
+       and no read receipts. It scrolls inside itself so a long backlog can't
+       push the action bar off the end of a very long page. -->
+  <section class="board" aria-labelledby="boardTitle">
+    <div class="board__head">
+      <h2 class="board__title" id="boardTitle">Notes</h2>
+      <button type="button" class="board__who" id="boardWho">
+        <span id="boardWhoName">Set your name</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16zM14 6l4 4"/></svg>
+      </button>
+    </div>
+
+    <div class="board__log" id="boardLog" role="log" aria-label="Notes between the two of you"></div>
+
+    <form class="board__compose" id="boardForm">
+      <label class="visually-hidden" for="boardInput">Write a note</label>
+      <input type="text" class="board__input" id="boardInput" maxlength="500"
+             placeholder="Leave a note" autocomplete="off" enterkeyhint="send">
+      <button type="submit" class="btn btn--primary board__send" id="boardSend" aria-label="Send note">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+  </section>
+
   <footer class="pagefoot">
     <!-- Fixed to the bottom of the viewport on phones, inline from tablet up. -->
     <div class="actionbar">
@@ -225,6 +249,24 @@
       </div>
     </form>
   </div>
+</dialog>
+
+<dialog class="sheet" id="nameDialog" aria-labelledby="nameTitle">
+  <form class="sheet__inner" id="nameForm">
+    <h2 class="sheet__title" id="nameTitle">Sign your notes</h2>
+    <p class="sheet__note">
+      This goes on the notes you leave, so the other phone knows who wrote
+      them. It stays on this device — the room doesn't remember it, and you can
+      change it whenever.
+    </p>
+    <input type="text" class="sheet__date" id="nameInput" maxlength="24" required
+           placeholder="Your name" autocomplete="off" autocapitalize="words" enterkeyhint="done">
+    <p class="sheet__error" id="nameError" role="alert" hidden></p>
+    <div class="sheet__actions">
+      <button type="button" class="btn btn--ghost" id="nameCancel"><span>Cancel</span></button>
+      <button type="submit" class="btn btn--primary"><span>Save</span></button>
+    </div>
+  </form>
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

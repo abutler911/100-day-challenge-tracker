@@ -3,8 +3,9 @@
  *
  * Two interchangeable backends behind one interface:
  *
- *   createSync({ config, roomId, onState, onStatus, onMeta })
- *     -> { setDay(day, on), clearAll(), setStartDate(iso), destroy() }
+ *   createSync({ config, roomId, onState, onStatus, onMeta, onMessages })
+ *     -> { setDay(day, on), clearAll(), setStartDate(iso), sendMessage(entry),
+ *          destroy() }
  *
  *   - Firebase Realtime Database when config is filled in. Shared across
  *     devices, live, no refresh needed.
@@ -17,9 +18,15 @@
  * Room settings that both devices must agree on — currently just the start
  * date — live alongside it under `meta` and arrive through onMeta.
  *
+ * Notes the two of you leave each other live under `messages`, keyed by a
+ * push id so they order themselves, and arrive through onMessages as an array
+ * sorted oldest first. Only the last MESSAGE_LIMIT are ever read or kept.
+ *
  * Writes are optimistic. Each one goes into a pending queue that is persisted
  * to localStorage before the network is touched, so a write made in a dead
- * zone survives a reload and replays on reconnect.
+ * zone survives a reload and replays on reconnect. Notes get their own queue
+ * with the same guarantee — a note typed in a lift is not lost, it is sent
+ * when there is signal again.
  */
 
 const FIREBASE_VERSION = "12.17.1";
@@ -28,6 +35,17 @@ const cdn = (mod) => `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/fir
 const cacheKey = (room) => `savings100:cache:${room}`;
 const pendingKey = (room) => `savings100:pending:${room}`;
 const metaKey = (room) => `savings100:meta:${room}`;
+const messagesKey = (room) => `savings100:messages:${room}`;
+const outboxKey = (room) => `savings100:outbox:${room}`;
+
+/** How many notes are read, kept and shown. A board between two people is not
+ *  an archive, and an unbounded one would grow the payload of every cold start
+ *  forever. */
+export const MESSAGE_LIMIT = 100;
+
+/** Matched by the database rules. Anything longer is refused there, so the
+ *  composer has to agree or the write fails after the fact. */
+export const MESSAGE_MAX = 500;
 
 export function isConfigured(config) {
   return Boolean(config && config.apiKey && config.databaseURL && config.projectId);
@@ -63,6 +81,24 @@ function writeJSON(key, value) {
 }
 
 /**
+ * Notes are stored keyed by id and read as a list. Sorting by timestamp with
+ * the id as the tie-break keeps two notes written in the same millisecond in
+ * a stable order rather than swapping places on every render.
+ */
+function sortMessages(map) {
+  return Object.entries(map || {})
+    .map(([id, m]) => ({
+      id,
+      at: Number(m && m.at) || 0,
+      by: String((m && m.by) || ""),
+      text: String((m && m.text) || ""),
+      pending: Boolean(m && m.pending),
+    }))
+    .sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    .slice(-MESSAGE_LIMIT);
+}
+
+/**
  * Overlay unconfirmed local writes on top of the last known server state, so
  * the UI reflects what you just tapped even before the server agrees.
  */
@@ -79,14 +115,17 @@ function merge(remote, pending) {
    Local-only backend
    ------------------------------------------------------------------------- */
 
-function createLocalSync({ roomId, onState, onStatus, onMeta, reason }) {
+function createLocalSync({ roomId, onState, onStatus, onMeta, onMessages, reason }) {
   const key = cacheKey(roomId);
   const mKey = metaKey(roomId);
+  const msgKey = messagesKey(roomId);
   let state = readJSON(key, {});
   let meta = readJSON(mKey, {});
+  let messages = readJSON(msgKey, {});
 
   const emit = () => onState({ ...state });
   const emitMeta = () => onMeta({ ...meta });
+  const emitMessages = () => onMessages(sortMessages(messages));
 
   const onStorage = (event) => {
     if (event.key === key) {
@@ -95,6 +134,9 @@ function createLocalSync({ roomId, onState, onStatus, onMeta, reason }) {
     } else if (event.key === mKey) {
       meta = readJSON(mKey, {});
       emitMeta();
+    } else if (event.key === msgKey) {
+      messages = readJSON(msgKey, {});
+      emitMessages();
     }
   };
   window.addEventListener("storage", onStorage);
@@ -103,6 +145,7 @@ function createLocalSync({ roomId, onState, onStatus, onMeta, reason }) {
   queueMicrotask(() => {
     emit();
     emitMeta();
+    emitMessages();
   });
 
   const commit = () => {
@@ -125,6 +168,20 @@ function createLocalSync({ roomId, onState, onStatus, onMeta, reason }) {
       writeJSON(mKey, meta);
       emitMeta();
     },
+    /**
+     * No server to mint an id, so time plus a little randomness does the job.
+     * The prefix keeps these apart from the push ids the remote backend makes,
+     * which matters if a room is later carried across to a configured deploy.
+     */
+    async sendMessage(entry) {
+      const id = `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const kept = sortMessages({ ...messages, [id]: entry });
+      messages = Object.fromEntries(
+        kept.map(({ id: mid, at, by, text }) => [mid, { at, by, text }])
+      );
+      writeJSON(msgKey, messages);
+      emitMessages();
+    },
     destroy() {
       window.removeEventListener("storage", onStorage);
     },
@@ -135,7 +192,7 @@ function createLocalSync({ roomId, onState, onStatus, onMeta, reason }) {
    Firebase Realtime Database backend
    ------------------------------------------------------------------------- */
 
-async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta }) {
+async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta, onMessages }) {
   onStatus({ mode: "remote", state: "connecting" });
 
   const [{ initializeApp }, { getAuth, signInAnonymously }, database] = await Promise.all([
@@ -144,7 +201,7 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
     import(/* @vite-ignore */ cdn("database")),
   ]);
 
-  const { getDatabase, ref, onValue, set, remove, off } = database;
+  const { getDatabase, ref, onValue, set, remove, off, push, query, limitToLast } = database;
 
   const app = initializeApp(config);
   await signInAnonymously(getAuth(app));
@@ -152,6 +209,7 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
   const db = getDatabase(app);
   const daysRef = ref(db, `rooms/${roomId}/days`);
   const metaRef = ref(db, `rooms/${roomId}/meta`);
+  const messagesRef = ref(db, `rooms/${roomId}/messages`);
   const connRef = ref(db, ".info/connected");
 
   let meta = readJSON(metaKey(roomId), {});
@@ -160,6 +218,8 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
   // phone shows real numbers instead of zeros while the socket opens.
   let remote = readJSON(cacheKey(roomId), {});
   let pending = readJSON(pendingKey(roomId), {});
+  let remoteMessages = readJSON(messagesKey(roomId), {});
+  let outbox = readJSON(outboxKey(roomId), []);
   let connected = false;
 
   /**
@@ -182,6 +242,15 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
 
   const emit = () => onState(merge(remote, pending));
   const savePending = () => writeJSON(pendingKey(roomId), pending);
+  const saveOutbox = () => writeJSON(outboxKey(roomId), outbox);
+
+  /** Notes still in the outbox are shown alongside the confirmed ones, marked
+   *  so the UI can say they are on their way rather than delivered. */
+  function emitMessages() {
+    const merged = { ...remoteMessages };
+    for (const note of outbox) if (!merged[note.id]) merged[note.id] = { ...note, pending: true };
+    onMessages(sortMessages(merged));
+  }
 
   /**
    * A listener that gets cancelled — denied by the rules, most often — is
@@ -190,6 +259,15 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
    * symptom of problems that have nothing to do with connectivity.
    */
   let lastError = null;
+
+  /**
+   * A refused *write* is a separate channel from a cancelled listener: the
+   * days listener clears lastError on every snapshot it receives, which would
+   * wipe a write failure seconds after it happened. Keeping it apart is what
+   * makes "the rules predate the messages node" stay on screen instead of
+   * flickering past.
+   */
+  let sendError = null;
 
   function onCancel(what) {
     return (err) => {
@@ -200,10 +278,11 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
   }
 
   function reportStatus() {
-    const queued = Object.keys(pending).length;
-    const base = { mode: "remote", queued, error: lastError, host: hostOf(config.databaseURL) };
+    const queued = Object.keys(pending).length + outbox.length;
+    const error = lastError || sendError;
+    const base = { mode: "remote", queued, error, host: hostOf(config.databaseURL) };
 
-    if (lastError) onStatus({ ...base, state: "error" });
+    if (error) onStatus({ ...base, state: "error" });
     else if (connected) onStatus({ ...base, state: queued ? "syncing" : "synced" });
     else if (everConnected || connectingTimedOut) onStatus({ ...base, state: "offline" });
     else onStatus({ ...base, state: "connecting" });
@@ -212,6 +291,7 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
   queueMicrotask(() => {
     emit();
     onMeta({ ...meta });
+    emitMessages();
   });
 
   const unsubDays = onValue(
@@ -235,6 +315,22 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
     onCancel("meta")
   );
 
+  /* Only ever the tail. Two people will not read back past a hundred notes,
+     and reading the lot would grow every cold start for the life of the room. */
+  const unsubMessages = onValue(
+    query(messagesRef, limitToLast(MESSAGE_LIMIT)),
+    (snap) => {
+      remoteMessages = snap.val() || {};
+      writeJSON(messagesKey(roomId), remoteMessages);
+      // Anything the server now echoes back is delivered; drop our copy.
+      const before = outbox.length;
+      outbox = outbox.filter((note) => !remoteMessages[note.id]);
+      if (outbox.length !== before) saveOutbox();
+      emitMessages();
+    },
+    onCancel("messages")
+  );
+
   const unsubConn = onValue(connRef, (snap) => {
     const wasConnected = connected;
     connected = snap.val() === true;
@@ -243,11 +339,14 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
       clearTimeout(graceTimer);
     }
     reportStatus();
-    if (connected && !wasConnected) flush();
+    if (connected && !wasConnected) {
+      flush();
+      flushOutbox();
+    }
   });
 
-  /** Push a single pending entry; drop it from the queue once it lands. */
-  async function push(day) {
+  /** Push a single pending day; drop it from the queue once it lands. */
+  async function pushDay(day) {
     const entry = pending[day];
     if (!entry) return;
     const target = ref(db, `rooms/${roomId}/days/${day}`);
@@ -267,7 +366,7 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
     try {
       for (const day of Object.keys(pending)) {
         try {
-          await push(day);
+          await pushDay(day);
         } catch (err) {
           console.warn(`Could not sync day ${day}:`, err);
           break; // still offline; leave the rest queued
@@ -279,8 +378,44 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
     }
   }
 
+  /**
+   * Notes go out one at a time, oldest first, and each keeps its id across
+   * retries — the id is minted locally by push() before anything is written,
+   * so replaying a queued note overwrites its own slot instead of arriving
+   * twice.
+   */
+  let sending = false;
+  async function flushOutbox() {
+    if (sending) return;
+    sending = true;
+    try {
+      for (const note of [...outbox]) {
+        try {
+          const { id, ...payload } = note;
+          await set(ref(db, `rooms/${roomId}/messages/${id}`), payload);
+          outbox = outbox.filter((queued) => queued.id !== id);
+          saveOutbox();
+          sendError = null;
+        } catch (err) {
+          console.warn("Could not send a note:", err);
+          sendError = {
+            at: "messages",
+            code: err?.code || "unknown",
+            message: err?.message || String(err),
+          };
+          break; // still offline, or refused; leave the rest queued
+        }
+      }
+    } finally {
+      sending = false;
+      emitMessages();
+      reportStatus();
+    }
+  }
+
   // Anything left over from a previous session goes out now.
   if (Object.keys(pending).length) flush();
+  if (outbox.length) flushOutbox();
 
   /* One place to read the whole picture when something is wrong. Cheap to
      leave in: it allocates nothing until it is called. */
@@ -292,9 +427,12 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
     everConnected,
     connectingTimedOut,
     queuedWrites: Object.keys(pending).length,
+    queuedNotes: outbox.length,
     daysKnown: Object.keys(remote).length,
+    notesKnown: Object.keys(remoteMessages).length,
     startDate: meta.startDate || "(none set)",
     lastError,
+    sendError,
   });
 
   return {
@@ -346,12 +484,31 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
         );
       }
     },
+    /**
+     * Optimistic like every other write here: the note is queued, painted at
+     * once, and pushed. A refusal leaves it queued and puts the reason on the
+     * status chip — which is where a room whose rules predate this feature
+     * finds out, rather than watching notes vanish.
+     */
+    async sendMessage(entry) {
+      // push() against the collection mints a key without writing anything,
+      // and it does so client-side — so a note composed with no signal already
+      // has its final id, and replaying it later is idempotent.
+      const id = push(messagesRef).key;
+      outbox = [...outbox, { id, ...entry }];
+      saveOutbox();
+      emitMessages();
+      reportStatus();
+      flushOutbox();
+    },
     destroy() {
       clearTimeout(graceTimer);
       if (typeof unsubDays === "function") unsubDays();
       else off(daysRef);
       if (typeof unsubMeta === "function") unsubMeta();
       else off(metaRef);
+      if (typeof unsubMessages === "function") unsubMessages();
+      else off(messagesRef);
       if (typeof unsubConn === "function") unsubConn();
       else off(connRef);
     },
@@ -362,14 +519,21 @@ async function createFirebaseSync({ config, roomId, onState, onStatus, onMeta })
    Entry point
    ------------------------------------------------------------------------- */
 
-export async function createSync({ config, roomId, onState, onStatus, onMeta = () => {} }) {
+export async function createSync({
+  config,
+  roomId,
+  onState,
+  onStatus,
+  onMeta = () => {},
+  onMessages = () => {},
+}) {
   if (!isConfigured(config)) {
-    return createLocalSync({ roomId, onState, onStatus, onMeta, reason: "unconfigured" });
+    return createLocalSync({ roomId, onState, onStatus, onMeta, onMessages, reason: "unconfigured" });
   }
   try {
-    return await createFirebaseSync({ config, roomId, onState, onStatus, onMeta });
+    return await createFirebaseSync({ config, roomId, onState, onStatus, onMeta, onMessages });
   } catch (err) {
     console.error("Firebase sync unavailable, falling back to this device only:", err);
-    return createLocalSync({ roomId, onState, onStatus, onMeta, reason: "error" });
+    return createLocalSync({ roomId, onState, onStatus, onMeta, onMessages, reason: "error" });
   }
 }
