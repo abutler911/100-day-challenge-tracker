@@ -1,282 +1,754 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>100 Days to Less Broke</title>
-<meta name="description" content="100 Days to Less Broke. One dollar more each day until it's $5,050 — a savings tracker two people share.">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>100 Days to Less Broke</title>
+    <meta
+      name="description"
+      content="100 Days to Less Broke. One dollar more each day until it's $5,050 — a savings tracker two people share."
+    />
 
-<meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#1a1024">
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#1a1024" />
 
-<!-- Resolves the theme onto <html> before the stylesheet paints, so the page
+    <!-- Resolves the theme onto <html> before the stylesheet paints, so the page
      never flashes the wrong palette. Must stay above the stylesheet, and below
      the theme-color meta it rewrites. -->
-<script src="./assets/theme.js"></script>
+    <script src="./assets/theme.js"></script>
 
-<!-- home-screen install (iOS needs its own set) -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="$5,050">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
-<link rel="icon" href="./assets/icons/favicon-32.png" sizes="32x32" type="image/png">
-<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
+    <!-- home-screen install (iOS needs its own set) -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="$5,050" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml" />
+    <link
+      rel="icon"
+      href="./assets/icons/favicon-32.png"
+      sizes="32x32"
+      type="image/png"
+    />
+    <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
 
-<link rel="stylesheet" href="./assets/app.css">
+    <link rel="stylesheet" href="./assets/app.css" />
 
-<!-- The two faces above the fold. Everything else loads with the stylesheet. -->
-<link rel="preload" href="./assets/fonts/outfit-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="./assets/fonts/outfit-latin-300-normal.woff2" as="font" type="font/woff2" crossorigin>
-</head>
-<body>
+    <!-- The two faces above the fold. Everything else loads with the stylesheet. -->
+    <link
+      rel="preload"
+      href="./assets/fonts/outfit-latin-400-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="./assets/fonts/outfit-latin-300-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+  </head>
+  <body>
+    <!-- Condensed ledger. Fixed to the top, fades in once the full ledger scrolls away. -->
+    <div class="railbar" id="railbar" aria-hidden="true">
+      <div class="railbar__inner">
+        <span class="railbar__total" id="railTotal">$0</span>
+        <span class="railbar__count" id="railCount">0 / 100</span>
+        <div class="railbar__track">
+          <div class="railbar__fill" id="railFill"></div>
+        </div>
+      </div>
+    </div>
 
-<!-- Condensed ledger. Fixed to the top, fades in once the full ledger scrolls away. -->
-<div class="railbar" id="railbar" aria-hidden="true">
-  <div class="railbar__inner">
-    <span class="railbar__total" id="railTotal">$0</span>
-    <span class="railbar__count" id="railCount">0 / 100</span>
-    <div class="railbar__track"><div class="railbar__fill" id="railFill"></div></div>
-  </div>
-</div>
-
-<div class="wrap">
-
-  <header class="masthead">
-    <div class="masthead__top">
-      <!-- The kicker carries the rule now that the headline is a name rather
+    <div class="wrap">
+      <header class="masthead">
+        <div class="masthead__top">
+          <!-- The kicker carries the rule now that the headline is a name rather
            than an explanation, and saying "100-day" here as well would repeat
            the headline two lines running. -->
-      <p class="eyebrow">One dollar more each day</p>
-      <div class="masthead__tools">
-        <!-- Which icon shows is driven by data-theme-pref on <html>, so the
+          <p class="eyebrow">One dollar more each day</p>
+          <div class="masthead__tools">
+            <!-- Which icon shows is driven by data-theme-pref on <html>, so the
              button never needs to be repainted from script. -->
-        <button type="button" class="iconbtn" id="theme" aria-label="Change theme">
-          <svg class="iconbtn__i iconbtn__i--system" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></svg>
-          <svg class="iconbtn__i iconbtn__i--light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
-          <svg class="iconbtn__i iconbtn__i--dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
-        </button>
-        <button type="button" class="chip" id="status" data-state="local">
-          <span class="chip__dot" aria-hidden="true"></span>
-          <span class="chip__text">Local only</span>
-        </button>
-      </div>
-    </div>
-    <div class="masthead__title">
-      <!-- Drawn here rather than loaded: a couple of KB, sharp at any density,
+            <button
+              type="button"
+              class="iconbtn"
+              id="theme"
+              aria-label="Change theme"
+            >
+              <svg
+                class="iconbtn__i iconbtn__i--system"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="8" />
+                <path
+                  d="M12 4a8 8 0 0 1 0 16z"
+                  fill="currentColor"
+                  stroke="none"
+                />
+              </svg>
+              <svg
+                class="iconbtn__i iconbtn__i--light"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="4.2" />
+                <path
+                  d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"
+                />
+              </svg>
+              <svg
+                class="iconbtn__i iconbtn__i--dark"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"
+                />
+              </svg>
+            </button>
+            <button type="button" class="chip" id="status" data-state="local">
+              <span class="chip__dot" aria-hidden="true"></span>
+              <span class="chip__text">Local only</span>
+            </button>
+          </div>
+        </div>
+        <div class="masthead__title">
+          <!-- Drawn here rather than loaded: a couple of KB, sharp at any density,
            and it takes the palette from the theme like everything else. The
            coin drops when you mark a day. -->
-      <!-- Cropped to the drawing rather than a round 64: the artwork spans
+          <!-- Cropped to the drawing rather than a round 64: the artwork spans
            roughly 4–57 on both axes, and the slack was making the mark render
            a third smaller than its box in the masthead. -->
-      <svg class="pig" id="pig" viewBox="4 4 53 53" role="img" aria-label="A piggy bank">
-        <!-- Falls straight down the x of the slot, so the drop lands in it. -->
-        <g class="pig__coin">
-          <circle class="pig__coin-face" cx="42.5" cy="10" r="5"/>
-          <circle class="pig__coin-rim" cx="42.5" cy="10" r="2.2"/>
-        </g>
+          <svg
+            class="pig"
+            id="pig"
+            viewBox="4 4 53 53"
+            role="img"
+            aria-labelledby="pig-title pig-desc"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <title id="pig-title">A shiny pink piggy bank</title>
+            <desc id="pig-desc">
+              A cheerful piggy bank with a gold coin poised above its slot.
+            </desc>
 
-        <g class="pig__body">
-          <!-- Ear over the head, which is the snout end. Behind the belly in
-               paint order so it tucks into the silhouette. -->
-          <path class="pig__ear" d="M23.6 28.2c-.6-5.4 2-9.4 5.6-9.6 2.4 2.4 3.4 6 2.8 10z"/>
-          <path class="pig__tail" d="M52 33.4c3.6-.7 4.5-3.7 2.5-4.7-1.8-.9-3.2 1-1.9 2.3"/>
+            <defs>
+              <linearGradient
+                id="pig-body-gradient"
+                x1="19"
+                y1="21"
+                x2="43"
+                y2="54"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0" stop-color="#ffb8d2" />
+                <stop offset=".48" stop-color="#ff6fa8" />
+                <stop offset="1" stop-color="#dc3677" />
+              </linearGradient>
 
-          <rect class="pig__leg" x="17" y="46" width="6.4" height="9.5" rx="2.6"/>
-          <rect class="pig__leg" x="39" y="46" width="6.4" height="9.5" rx="2.6"/>
+              <linearGradient
+                id="pig-belly-gradient"
+                x1="31"
+                y1="27"
+                x2="35"
+                y2="52"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stop-color="#ff91ba" stop-opacity="0" />
+                <stop offset="1" stop-color="#a81155" stop-opacity=".34" />
+              </linearGradient>
 
-          <ellipse class="pig__belly" cx="32" cy="37" rx="21" ry="14.5"/>
+              <linearGradient
+                id="pig-snout-gradient"
+                x1="8"
+                y1="34"
+                x2="14"
+                y2="44"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stop-color="#ffc1d8" />
+                <stop offset="1" stop-color="#f05c99" />
+              </linearGradient>
 
-          <ellipse class="pig__snout" cx="11.2" cy="39" rx="6.5" ry="5.3"/>
-          <circle class="pig__nostril" cx="9.2" cy="39" r=".95"/>
-          <circle class="pig__nostril" cx="13.2" cy="39" r=".95"/>
-          <circle class="pig__eye" cx="21" cy="32.5" r="1.7"/>
+              <linearGradient
+                id="pig-ear-gradient"
+                x1="25"
+                y1="19"
+                x2="30"
+                y2="31"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stop-color="#ffbdd4" />
+                <stop offset="1" stop-color="#d93678" />
+              </linearGradient>
 
-          <!-- Rotated to follow the fall of the back rather than sitting flat
-               across it, and set just inside the edge so it reads as cut in. -->
-          <rect class="pig__slot" x="36" y="25" width="13" height="3.2" rx="1.6"
-                transform="rotate(20 42.5 26.6)"/>
-        </g>
-      </svg>
+              <linearGradient
+                id="pig-leg-gradient"
+                x1="31"
+                y1="44"
+                x2="31"
+                y2="56"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stop-color="#ef4e8e" />
+                <stop offset="1" stop-color="#bd245f" />
+              </linearGradient>
 
-      <h1>100 Days to <em>Less Broke</em></h1>
-    </div>
-    <p class="window">
-      <span class="window__leg">Day 1
-        <button type="button" class="window__edit" id="editStart" aria-label="Change the start date">
-          <b id="startLabel">—</b>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16zM14 6l4 4"/></svg>
-        </button>
-      </span>
-      <span class="window__arrow" aria-hidden="true">→</span>
-      <span class="window__leg">Day <span id="lastDayNum">100</span> <b id="endLabel">—</b></span>
-    </p>
-  </header>
+              <radialGradient id="pig-coin-gradient" cx="35%" cy="28%" r="76%">
+                <stop stop-color="#fff7a8" />
+                <stop offset=".48" stop-color="#ffc928" />
+                <stop offset="1" stop-color="#e18a00" />
+              </radialGradient>
 
-  <span id="sentinel" class="sentinel" aria-hidden="true"></span>
+              <linearGradient
+                id="pig-coin-edge"
+                x1="39"
+                y1="6"
+                x2="47"
+                y2="14"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stop-color="#fff172" />
+                <stop offset="1" stop-color="#bd6e00" />
+              </linearGradient>
 
-  <section class="ledger" aria-label="Progress summary">
-    <div class="total-row">
-      <div class="total" id="total" aria-live="polite">$0</div>
-      <div class="of">banked of <span id="goalInline">$5,050</span></div>
-    </div>
-    <div class="track"><div class="fill" id="fill"></div></div>
+              <filter
+                id="pig-soft-shadow"
+                x="-30%"
+                y="-30%"
+                width="160%"
+                height="180%"
+                color-interpolation-filters="sRGB"
+              >
+                <feDropShadow
+                  dx="0"
+                  dy="1.5"
+                  stdDeviation="1.3"
+                  flood-color="#68123c"
+                  flood-opacity=".28"
+                />
+              </filter>
 
-    <!-- Calendar day vs squares actually retired. Ticking them out of order
+              <filter
+                id="pig-coin-shadow"
+                x="-60%"
+                y="-60%"
+                width="220%"
+                height="240%"
+                color-interpolation-filters="sRGB"
+              >
+                <feDropShadow
+                  dx="0"
+                  dy="1"
+                  stdDeviation=".9"
+                  flood-color="#8f5500"
+                  flood-opacity=".38"
+                />
+              </filter>
+            </defs>
+
+            <!-- A soft contact shadow keeps the character from floating. -->
+            <ellipse
+              cx="31.5"
+              cy="55.2"
+              rx="18.2"
+              ry="1.55"
+              fill="#6d1641"
+              opacity=".16"
+            />
+
+            <!-- Keep this group intact if your existing CSS animates the coin drop. -->
+            <g class="pig__coin" filter="url(#pig-coin-shadow)">
+              <circle
+                class="pig__coin-face"
+                cx="42.5"
+                cy="10"
+                r="5.15"
+                fill="url(#pig-coin-gradient)"
+                stroke="url(#pig-coin-edge)"
+                stroke-width="1.15"
+              />
+              <circle
+                class="pig__coin-rim"
+                cx="42.5"
+                cy="10"
+                r="3.55"
+                fill="none"
+                stroke="#d88900"
+                stroke-width=".6"
+                opacity=".75"
+              />
+              <path
+                d="M44.1 7.75c-.45-.35-1.03-.55-1.62-.55-1.05 0-1.78.5-1.78 1.24 0 .73.58 1.02 1.82 1.3 1.17.27 1.75.65 1.75 1.48 0 .9-.76 1.55-1.9 1.55-.75 0-1.46-.27-1.97-.76m2.02-5.5v6.94"
+                fill="none"
+                stroke="#a95d00"
+                stroke-width=".78"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M40.1 7.25a4 4 0 0 1 2.2-1.08"
+                fill="none"
+                stroke="#fff9bd"
+                stroke-width=".65"
+                stroke-linecap="round"
+                opacity=".95"
+              />
+            </g>
+
+            <g class="pig__body" filter="url(#pig-soft-shadow)">
+              <!-- Tail sits behind the body, with a real curl instead of a loose hook. -->
+              <path
+                class="pig__tail"
+                d="M50.7 31.7c3.45-1.45 6.05-.5 5.72 1.45-.28 1.72-2.85 2.05-3.5.62-.45-.98.55-1.72 1.28-1.05"
+                fill="none"
+                stroke="#dd3d7d"
+                stroke-width="2.15"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+
+              <!-- Back legs are painted first so the body naturally overlaps them. -->
+              <path
+                class="pig__leg pig__leg--back"
+                d="M39.2 45.2h6.45v7.65c0 1.6-1.18 2.55-2.95 2.55h-.58c-1.75 0-2.92-.95-2.92-2.55z"
+                fill="url(#pig-leg-gradient)"
+              />
+              <path
+                class="pig__leg pig__leg--front"
+                d="M17.35 44.9h6.45v7.95c0 1.6-1.18 2.55-2.95 2.55h-.58c-1.75 0-2.92-.95-2.92-2.55z"
+                fill="url(#pig-leg-gradient)"
+              />
+
+              <!-- Custom body contour: high back, round belly, and tapered face. -->
+              <path
+                class="pig__belly"
+                d="M16.6 28.5c3.9-5.45 10.35-8.2 18.45-7.8 8.25.4 14.62 3.65 17.1 9.05 2.1 4.55 1.05 10.25-2.55 14.2-3.52 3.88-9.05 6.05-16.08 6.2-6.75.15-12.75-1.3-16.8-4.2-3.95-2.85-5.92-6.82-5.2-10.7.5-2.68 2.25-5.1 5.08-6.75z"
+                fill="url(#pig-body-gradient)"
+                stroke="#c82d6c"
+                stroke-width=".85"
+                stroke-linejoin="round"
+              />
+
+              <!-- Lower-body depth. -->
+              <path
+                d="M12.15 38.9c2.5 7.25 10.78 11.4 21.37 11.2 8.62-.17 14.5-3.25 17.25-7.95-3.85 3.78-9.65 5.78-17.25 5.88-10.15.15-17.35-3.15-21.37-9.13z"
+                fill="url(#pig-belly-gradient)"
+                pointer-events="none"
+              />
+
+              <!-- Ear is integrated into the head and has an inset fold. -->
+              <path
+                class="pig__ear"
+                d="M22.55 26.4c-.28-5.1 2.05-8.45 5.55-8.25 2.62 2.05 3.55 5.42 2.35 9.82z"
+                fill="url(#pig-ear-gradient)"
+                stroke="#c72c6a"
+                stroke-width=".75"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M25.15 24.85c.1-2.6 1.05-4.35 2.55-4.65 1.05 1.2 1.55 2.9 1.32 4.82z"
+                fill="#b71f5d"
+                opacity=".28"
+              />
+
+              <!-- Snout overlaps the face, giving the pig a readable profile. -->
+              <ellipse
+                class="pig__snout"
+                cx="11.3"
+                cy="38.65"
+                rx="6.35"
+                ry="5.15"
+                fill="url(#pig-snout-gradient)"
+                stroke="#c92e6d"
+                stroke-width=".8"
+              />
+              <ellipse
+                cx="9.65"
+                cy="37.15"
+                rx="2.55"
+                ry="1.35"
+                fill="#fff"
+                opacity=".23"
+                transform="rotate(-18 9.65 37.15)"
+              />
+              <ellipse
+                class="pig__nostril"
+                cx="9.1"
+                cy="39.15"
+                rx=".92"
+                ry="1.12"
+                fill="#8e1d50"
+              />
+              <ellipse
+                class="pig__nostril"
+                cx="13.22"
+                cy="39.15"
+                rx=".92"
+                ry="1.12"
+                fill="#8e1d50"
+              />
+
+              <!-- Friendly eye with a highlight and brow for more personality. -->
+              <path
+                d="M18.85 30.75c1.18-.82 2.65-.83 3.75-.1"
+                fill="none"
+                stroke="#9c2055"
+                stroke-width=".65"
+                stroke-linecap="round"
+                opacity=".65"
+              />
+              <circle
+                class="pig__eye"
+                cx="20.8"
+                cy="32.5"
+                r="1.75"
+                fill="#53102f"
+              />
+              <circle cx="20.25" cy="31.92" r=".55" fill="#fff" />
+              <path
+                d="M18.7 37.55c.65.82 1.58 1.25 2.55 1.2"
+                fill="none"
+                stroke="#a51f59"
+                stroke-width=".7"
+                stroke-linecap="round"
+                opacity=".65"
+              />
+
+              <!-- Gloss and cheek details add polish without making the icon noisy. -->
+              <path
+                d="M30.4 23.25c5.65-.58 11.9.85 15.5 4.1"
+                fill="none"
+                stroke="#ffd5e4"
+                stroke-width="1.15"
+                stroke-linecap="round"
+                opacity=".5"
+              />
+              <circle
+                cx="18.3"
+                cy="36.2"
+                r="2.05"
+                fill="#ffbad2"
+                opacity=".25"
+              />
+
+              <!-- The slot stays centered directly below the coin. -->
+              <rect
+                class="pig__slot"
+                x="35.85"
+                y="24.45"
+                width="13.3"
+                height="3.2"
+                rx="1.6"
+                fill="#74143f"
+                transform="rotate(14 42.5 26.05)"
+              />
+              <path
+                d="M37.15 24.9l10.55 2.6"
+                fill="none"
+                stroke="#ffb3cd"
+                stroke-width=".55"
+                stroke-linecap="round"
+                opacity=".48"
+              />
+
+              <!-- Tiny hoof separations keep the feet from reading as blocks. -->
+              <path
+                d="M20.58 53.55v1.45M42.4 53.55V55"
+                stroke="#891845"
+                stroke-width=".65"
+                stroke-linecap="round"
+                opacity=".7"
+              />
+            </g>
+          </svg>
+
+          <h1>100 Days to <em>Less Broke</em></h1>
+        </div>
+        <p class="window">
+          <span class="window__leg"
+            >Day 1
+            <button
+              type="button"
+              class="window__edit"
+              id="editStart"
+              aria-label="Change the start date"
+            >
+              <b id="startLabel">—</b>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 20h4l10-10-4-4L4 16zM14 6l4 4" />
+              </svg>
+            </button>
+          </span>
+          <span class="window__arrow" aria-hidden="true">→</span>
+          <span class="window__leg"
+            >Day <span id="lastDayNum">100</span> <b id="endLabel">—</b></span
+          >
+        </p>
+      </header>
+
+      <span id="sentinel" class="sentinel" aria-hidden="true"></span>
+
+      <section class="ledger" aria-label="Progress summary">
+        <div class="total-row">
+          <div class="total" id="total" aria-live="polite">$0</div>
+          <div class="of">banked of <span id="goalInline">$5,050</span></div>
+        </div>
+        <div class="track"><div class="fill" id="fill"></div></div>
+
+        <!-- Calendar day vs squares actually retired. Ticking them out of order
          makes those two diverge, and the gap is the "are we on track" answer.
          Both strings are replaced on first render. -->
-    <div class="pace" id="pace" data-state="even">
-      <span class="pace__dot" aria-hidden="true"></span>
-      <span class="pace__verdict" id="paceVerdict">On pace</span>
-      <span class="pace__detail" id="paceDetail">Day 1 today · nothing checked yet</span>
-    </div>
+        <div class="pace" id="pace" data-state="even">
+          <span class="pace__dot" aria-hidden="true"></span>
+          <span class="pace__verdict" id="paceVerdict">On pace</span>
+          <span class="pace__detail" id="paceDetail"
+            >Day 1 today · nothing checked yet</span
+          >
+        </div>
 
-    <div class="stats">
-      <div class="stat"><span>Days marked</span><b id="count">0 / 100</b></div>
-      <div class="stat"><span>Next deposit</span><b id="next">—</b></div>
-      <div class="stat"><span>Still to save</span><b id="left">$5,050</b></div>
-    </div>
-  </section>
+        <div class="stats">
+          <div class="stat">
+            <span>Days marked</span><b id="count">0 / 100</b>
+          </div>
+          <div class="stat"><span>Next deposit</span><b id="next">—</b></div>
+          <div class="stat">
+            <span>Still to save</span><b id="left">$5,050</b>
+          </div>
+        </div>
+      </section>
 
-  <main>
-    <div class="grid" id="grid" role="group" aria-label="100 day savings grid"></div>
-  </main>
+      <main>
+        <div
+          class="grid"
+          id="grid"
+          role="group"
+          aria-label="100 day savings grid"
+        ></div>
+      </main>
 
-  <!-- A note board rather than a chat: two people, one room, no notifications
+      <!-- A note board rather than a chat: two people, one room, no notifications
        and no read receipts. It scrolls inside itself so a long backlog can't
        push the action bar off the end of a very long page. -->
-  <section class="board" aria-labelledby="boardTitle">
-    <div class="board__head">
-      <h2 class="board__title" id="boardTitle">Notes</h2>
-      <button type="button" class="board__who" id="boardWho">
-        <span id="boardWhoName">Set your name</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16zM14 6l4 4"/></svg>
-      </button>
-    </div>
+      <section class="board" aria-labelledby="boardTitle">
+        <div class="board__head">
+          <h2 class="board__title" id="boardTitle">Notes</h2>
+          <button type="button" class="board__who" id="boardWho">
+            <span id="boardWhoName">Set your name</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 20h4l10-10-4-4L4 16zM14 6l4 4" />
+            </svg>
+          </button>
+        </div>
 
-    <div class="board__log" id="boardLog" role="log" aria-label="Notes between the two of you"></div>
+        <div
+          class="board__log"
+          id="boardLog"
+          role="log"
+          aria-label="Notes between the two of you"
+        ></div>
 
-    <form class="board__compose" id="boardForm">
-      <label class="visually-hidden" for="boardInput">Write a note</label>
-      <input type="text" class="board__input" id="boardInput" maxlength="500"
-             placeholder="Leave a note" autocomplete="off" enterkeyhint="send">
-      <button type="submit" class="btn btn--primary board__send" id="boardSend" aria-label="Send note">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 6l6 6-6 6"/></svg>
-      </button>
-    </form>
-  </section>
+        <form class="board__compose" id="boardForm">
+          <label class="visually-hidden" for="boardInput">Write a note</label>
+          <input
+            type="text"
+            class="board__input"
+            id="boardInput"
+            maxlength="500"
+            placeholder="Leave a note"
+            autocomplete="off"
+            enterkeyhint="send"
+          />
+          <button
+            type="submit"
+            class="btn btn--primary board__send"
+            id="boardSend"
+            aria-label="Send note"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 12h14M12 6l6 6-6 6" />
+            </svg>
+          </button>
+        </form>
+      </section>
 
-  <footer class="pagefoot">
-    <!-- Fixed to the bottom of the viewport on phones, inline from tablet up. -->
-    <div class="actionbar">
-      <div class="actionbar__inner">
-        <button type="button" class="btn" id="share">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v13M12 3 8 7M12 3l4 4M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>
-          <span>Share</span>
-        </button>
-        <button type="button" class="btn" id="today">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
-          <span>Today</span>
-        </button>
-        <button type="button" class="btn btn--danger" id="reset">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>
-          <span>Clear</span>
-        </button>
-      </div>
-    </div>
+      <footer class="pagefoot">
+        <!-- Fixed to the bottom of the viewport on phones, inline from tablet up. -->
+        <div class="actionbar">
+          <div class="actionbar__inner">
+            <button type="button" class="btn" id="share">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 3v13M12 3 8 7M12 3l4 4M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"
+                />
+              </svg>
+              <span>Share</span>
+            </button>
+            <button type="button" class="btn" id="today">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="8" />
+                <path d="M12 8v4l3 2" />
+              </svg>
+              <span>Today</span>
+            </button>
+            <button type="button" class="btn btn--danger" id="reset">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" />
+              </svg>
+              <span>Clear</span>
+            </button>
+          </div>
+        </div>
 
-    <p class="colophon">
-      Created &amp; developed with
-      <!-- Drawn rather than the emoji: ❤️ renders as a different shape on every
+        <p class="colophon">
+          Created &amp; developed with
+          <!-- Drawn rather than the emoji: ❤️ renders as a different shape on every
            platform and depends on an emoji font being present, where this takes
            the app's own red and stays the same everywhere. -->
-      <svg class="colophon__heart" viewBox="0 0 24 24" role="img" aria-label="love">
-        <path d="M12 21s-7.6-4.6-9.7-9.2C.7 8.3 2.4 4.6 5.9 4c2.2-.4 4.4.7 5.4 2.6h1.4C13.7 4.7 15.9 3.6 18.1 4c3.5.6 5.2 4.3 3.6 7.8C19.6 16.4 12 21 12 21z"/>
-      </svg>
-      by Mr. Gray Enterprises, Inc.
-      <span class="colophon__sep" aria-hidden="true">|</span>
-      2026
-    </p>
-  </footer>
-</div>
-
-<dialog class="sheet" id="startDialog" aria-labelledby="startTitle">
-  <form class="sheet__inner" id="startForm">
-    <h2 class="sheet__title" id="startTitle">Start date</h2>
-    <p class="sheet__note">
-      The date Day 1 falls on. Every square keeps its amount — only the dates
-      move. This is shared, so it changes on both phones.
-    </p>
-    <input type="date" class="sheet__date" id="startInput" required>
-    <p class="sheet__error" id="startError" role="alert" hidden></p>
-    <div class="sheet__actions">
-      <button type="button" class="btn btn--ghost" id="startCancel"><span>Cancel</span></button>
-      <button type="submit" class="btn btn--primary" id="startSave"><span>Save</span></button>
+          <svg
+            class="colophon__heart"
+            viewBox="0 0 24 24"
+            role="img"
+            aria-label="love"
+          >
+            <path
+              d="M12 21s-7.6-4.6-9.7-9.2C.7 8.3 2.4 4.6 5.9 4c2.2-.4 4.4.7 5.4 2.6h1.4C13.7 4.7 15.9 3.6 18.1 4c3.5.6 5.2 4.3 3.6 7.8C19.6 16.4 12 21 12 21z"
+            />
+          </svg>
+          by Mr. Gray Enterprises, Inc.
+          <span class="colophon__sep" aria-hidden="true">|</span>
+          2026
+        </p>
+      </footer>
     </div>
-  </form>
-</dialog>
 
-<!-- Room sheet. `data-mode` picks which half shows: `first-run` when no room
+    <dialog class="sheet" id="startDialog" aria-labelledby="startTitle">
+      <form class="sheet__inner" id="startForm">
+        <h2 class="sheet__title" id="startTitle">Start date</h2>
+        <p class="sheet__note">
+          The date Day 1 falls on. Every square keeps its amount — only the
+          dates move. This is shared, so it changes on both phones.
+        </p>
+        <input type="date" class="sheet__date" id="startInput" required />
+        <p class="sheet__error" id="startError" role="alert" hidden></p>
+        <div class="sheet__actions">
+          <button type="button" class="btn btn--ghost" id="startCancel">
+            <span>Cancel</span>
+          </button>
+          <button type="submit" class="btn btn--primary" id="startSave">
+            <span>Save</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Room sheet. `data-mode` picks which half shows: `first-run` when no room
      is known yet and one has to be chosen, `manage` for the standing "who else
      is in here" surface behind the Share button. -->
-<dialog class="sheet" id="roomDialog" data-mode="manage" aria-labelledby="roomTitle">
-  <div class="sheet__inner">
-    <h2 class="sheet__title" id="roomTitle">Room</h2>
-    <p class="sheet__note" id="roomNote"></p>
+    <dialog
+      class="sheet"
+      id="roomDialog"
+      data-mode="manage"
+      aria-labelledby="roomTitle"
+    >
+      <div class="sheet__inner">
+        <h2 class="sheet__title" id="roomTitle">Room</h2>
+        <p class="sheet__note" id="roomNote"></p>
 
-    <div class="room__current">
-      <span class="room__label">This room's code</span>
-      <code class="room__code" id="roomCode">—</code>
-      <div class="room__send">
-        <button type="button" class="btn btn--ghost" id="roomCopy"><span>Copy code</span></button>
-        <button type="button" class="btn btn--primary" id="roomSend"><span>Send link</span></button>
-      </div>
-    </div>
+        <div class="room__current">
+          <span class="room__label">This room's code</span>
+          <code class="room__code" id="roomCode">—</code>
+          <div class="room__send">
+            <button type="button" class="btn btn--ghost" id="roomCopy">
+              <span>Copy code</span>
+            </button>
+            <button type="button" class="btn btn--primary" id="roomSend">
+              <span>Send link</span>
+            </button>
+          </div>
+        </div>
 
-    <form class="room__join" id="roomForm">
-      <label class="room__label" for="roomInput" id="roomJoinLabel">Switch to another room</label>
-      <!-- Autocorrect and capitalisation would quietly mangle a random code on
+        <form class="room__join" id="roomForm">
+          <label class="room__label" for="roomInput" id="roomJoinLabel"
+            >Switch to another room</label
+          >
+          <!-- Autocorrect and capitalisation would quietly mangle a random code on
            a phone keyboard, and anything under 16px makes iOS zoom the page. -->
-      <input type="text" class="sheet__date room__input" id="roomInput"
-             placeholder="Paste a link or code"
-             autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
-      <p class="sheet__error" id="roomError" role="alert" hidden></p>
-      <div class="sheet__actions">
-        <button type="button" class="btn btn--ghost" id="roomFresh"><span>Start fresh</span></button>
-        <button type="button" class="btn btn--ghost" id="roomClose"><span>Close</span></button>
-        <button type="submit" class="btn btn--primary" id="roomGo"><span>Join</span></button>
+          <input
+            type="text"
+            class="sheet__date room__input"
+            id="roomInput"
+            placeholder="Paste a link or code"
+            autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+          />
+          <p class="sheet__error" id="roomError" role="alert" hidden></p>
+          <div class="sheet__actions">
+            <button type="button" class="btn btn--ghost" id="roomFresh">
+              <span>Start fresh</span>
+            </button>
+            <button type="button" class="btn btn--ghost" id="roomClose">
+              <span>Close</span>
+            </button>
+            <button type="submit" class="btn btn--primary" id="roomGo">
+              <span>Join</span>
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
-</dialog>
+    </dialog>
 
-<dialog class="sheet" id="nameDialog" aria-labelledby="nameTitle">
-  <form class="sheet__inner" id="nameForm">
-    <h2 class="sheet__title" id="nameTitle">Sign your notes</h2>
-    <p class="sheet__note">
-      This goes on the notes you leave, so the other phone knows who wrote
-      them. It stays on this device — the room doesn't remember it, and you can
-      change it whenever.
-    </p>
-    <input type="text" class="sheet__date" id="nameInput" maxlength="24" required
-           placeholder="Your name" autocomplete="off" autocapitalize="words" enterkeyhint="done">
-    <p class="sheet__error" id="nameError" role="alert" hidden></p>
-    <div class="sheet__actions">
-      <button type="button" class="btn btn--ghost" id="nameCancel"><span>Cancel</span></button>
-      <button type="submit" class="btn btn--primary"><span>Save</span></button>
-    </div>
-  </form>
-</dialog>
+    <dialog class="sheet" id="nameDialog" aria-labelledby="nameTitle">
+      <form class="sheet__inner" id="nameForm">
+        <h2 class="sheet__title" id="nameTitle">Sign your notes</h2>
+        <p class="sheet__note">
+          This goes on the notes you leave, so the other phone knows who wrote
+          them. It stays on this device — the room doesn't remember it, and you
+          can change it whenever.
+        </p>
+        <input
+          type="text"
+          class="sheet__date"
+          id="nameInput"
+          maxlength="24"
+          required
+          placeholder="Your name"
+          autocomplete="off"
+          autocapitalize="words"
+          enterkeyhint="done"
+        />
+        <p class="sheet__error" id="nameError" role="alert" hidden></p>
+        <div class="sheet__actions">
+          <button type="button" class="btn btn--ghost" id="nameCancel">
+            <span>Cancel</span>
+          </button>
+          <button type="submit" class="btn btn--primary">
+            <span>Save</span>
+          </button>
+        </div>
+      </form>
+    </dialog>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<noscript>
-  <p style="padding:24px;font-family:monospace;color:#ece7de">
-    This tracker needs JavaScript to run.
-  </p>
-</noscript>
+    <noscript>
+      <p style="padding: 24px; font-family: monospace; color: #ece7de">
+        This tracker needs JavaScript to run.
+      </p>
+    </noscript>
 
-<script type="module" src="./assets/app.js"></script>
-</body>
+    <script type="module" src="./assets/app.js"></script>
+  </body>
 </html>

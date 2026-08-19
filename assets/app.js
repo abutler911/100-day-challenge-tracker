@@ -1,5 +1,5 @@
-import { FIREBASE_CONFIG, CHALLENGE, ROOM_ID } from "./config.js";
-import { createSync, isConfigured, MESSAGE_MAX } from "./sync.js";
+import { FIREBASE_CONFIG, CHALLENGE, ROOM_ID } from './config.js';
+import { createSync, isConfigured, MESSAGE_MAX } from './sync.js';
 
 /* -------------------------------------------------------------------------
    Challenge maths and dates
@@ -9,42 +9,47 @@ const DAYS = CHALLENGE.days;
 const GOAL = (DAYS * (DAYS + 1)) / 2;
 
 const money = new Intl.NumberFormat(CHALLENGE.locale, {
-  style: "currency",
+  style: 'currency',
   currency: CHALLENGE.currency,
   maximumFractionDigits: 0,
 });
 
-const shortDate = new Intl.DateTimeFormat(CHALLENGE.locale, { month: "short", day: "numeric" });
+const shortDate = new Intl.DateTimeFormat(CHALLENGE.locale, {
+  month: 'short',
+  day: 'numeric',
+});
 const longDate = new Intl.DateTimeFormat(CHALLENGE.locale, {
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-  year: "numeric",
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
 });
 
 /** Parse YYYY-MM-DD as a local date. `new Date("2026-08-13")` would be UTC
  *  midnight, which reads as the 12th in every US timezone. */
 function localDate(iso) {
-  const [y, m, d] = iso.split("-").map(Number);
+  const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
 function toISO(date) {
-  const pad = (n) => String(n).padStart(2, "0");
+  const pad = (n) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 /** Round-tripping through Date catches the shapes a regex can't, like
  *  2026-02-31, which rolls forward to March rather than failing. */
 function isValidISO(iso) {
-  if (typeof iso !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
   const parsed = localDate(iso);
   return !Number.isNaN(parsed.getTime()) && toISO(parsed) === iso;
 }
 
 /** The start date belongs to the room — CHALLENGE.startDate is only the seed
  *  used until the room reports one of its own. */
-let startISO = isValidISO(CHALLENGE.startDate) ? CHALLENGE.startDate : toISO(new Date());
+let startISO = isValidISO(CHALLENGE.startDate)
+  ? CHALLENGE.startDate
+  : toISO(new Date());
 let START = localDate(startISO);
 
 function dateFor(day) {
@@ -84,17 +89,18 @@ function elapsedDay() {
   return Math.round((b - a) / 86400000) + 1;
 }
 
-
 /* -------------------------------------------------------------------------
    Room identity
    ------------------------------------------------------------------------- */
 
-const ROOM_STORE = "savings100:room";
+const ROOM_STORE = 'savings100:room';
 
 function randomRoom() {
   const bytes = new Uint8Array(12);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(36).padStart(2, "0")).join("").slice(0, 18);
+  return Array.from(bytes, (b) => b.toString(36).padStart(2, '0'))
+    .join('')
+    .slice(0, 18);
 }
 
 /** A room ID is a path segment under `rooms/`, so it has to keep clear of the
@@ -107,11 +113,12 @@ const ROOM_SHAPE = /^[A-Za-z0-9_-]{6,64}$/;
  * the other phone. Null for anything that is none of those.
  */
 function parseRoom(text) {
-  const raw = String(text || "").trim();
+  const raw = String(text || '').trim();
   if (!raw) return null;
 
-  const cut = raw.indexOf("#");
-  const fromLink = cut === -1 ? null : new URLSearchParams(raw.slice(cut + 1)).get("r");
+  const cut = raw.indexOf('#');
+  const fromLink =
+    cut === -1 ? null : new URLSearchParams(raw.slice(cut + 1)).get('r');
   const candidate = (fromLink ?? raw).trim();
 
   return ROOM_SHAPE.test(candidate) ? candidate : null;
@@ -154,7 +161,7 @@ if (!room && !isConfigured(FIREBASE_CONFIG)) {
 function isInstalled() {
   return (
     window.navigator.standalone === true ||
-    window.matchMedia("(display-mode: standalone)").matches
+    window.matchMedia('(display-mode: standalone)').matches
   );
 }
 
@@ -180,12 +187,12 @@ function adoptRoom(id) {
 
 const el = (id) => document.getElementById(id);
 
-const grid = el("grid");
-const railbar = el("railbar");
-const toastEl = el("toast");
-const statusChip = el("status");
-const resetBtn = el("reset");
-const paceEl = el("pace");
+const grid = el('grid');
+const railbar = el('railbar');
+const toastEl = el('toast');
+const statusChip = el('status');
+const resetBtn = el('reset');
+const paceEl = el('pace');
 
 /* -------------------------------------------------------------------------
    Grid
@@ -201,16 +208,19 @@ function buildGrid() {
 
   for (let i = 1; i <= DAYS; i++) {
     const date = dateFor(i);
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "cell" + (i === today ? " today" : "");
-    btn.style.setProperty("--w", `${(i / DAYS) * 100}%`);
-    btn.setAttribute("aria-pressed", "false");
-    btn.setAttribute("aria-label", `Day ${i}, ${shortDate.format(date)}, ${money.format(i)}`);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cell' + (i === today ? ' today' : '');
+    btn.style.setProperty('--w', `${(i / DAYS) * 100}%`);
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute(
+      'aria-label',
+      `Day ${i}, ${shortDate.format(date)}, ${money.format(i)}`
+    );
     btn.dataset.day = String(i);
     // Sweeps in rather than appearing all at once. Capped so the hundredth
     // square is not still waiting half a second after the first.
-    btn.style.setProperty("--in-delay", `${Math.min(i * 7, 520)}ms`);
+    btn.style.setProperty('--in-delay', `${Math.min(i * 7, 520)}ms`);
     btn.innerHTML =
       `<span class="n">${i}</span>` +
       `<span class="amt">${money.format(i)}</span>` +
@@ -224,25 +234,25 @@ function buildGrid() {
   // Only ever on the first paint — dropped once it has played so later
   // re-renders don't replay it.
   if (!reduceMotion.matches) {
-    grid.classList.add("is-entering");
-    setTimeout(() => grid.classList.remove("is-entering"), 1100);
+    grid.classList.add('is-entering');
+    setTimeout(() => grid.classList.remove('is-entering'), 1100);
   }
 }
 
 function popCell(cell) {
   if (reduceMotion.matches) return;
-  cell.classList.remove("is-popping");
+  cell.classList.remove('is-popping');
   void cell.offsetWidth;
-  cell.classList.add("is-popping");
-  setTimeout(() => cell.classList.remove("is-popping"), 460);
+  cell.classList.add('is-popping');
+  setTimeout(() => cell.classList.remove('is-popping'), 460);
 }
 
 /** Taps made before the backend finishes connecting, replayed once it does. */
 const buffered = [];
 
 /** One listener on the grid instead of 100 on the cells. */
-grid.addEventListener("click", (event) => {
-  const btn = event.target.closest(".cell");
+grid.addEventListener('click', (event) => {
+  const btn = event.target.closest('.cell');
   if (!btn) return;
 
   const day = Number(btn.dataset.day);
@@ -284,20 +294,20 @@ function render() {
       marked++;
     }
     const cell = cells.get(i);
-    const shown = cell.getAttribute("aria-pressed") === "true";
-    if (shown !== on) cell.setAttribute("aria-pressed", on ? "true" : "false");
+    const shown = cell.getAttribute('aria-pressed') === 'true';
+    if (shown !== on) cell.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
 
   const pct = (sum / GOAL) * 100;
 
   countTo(sum);
-  el("count").textContent = `${marked} / ${DAYS}`;
-  el("left").textContent = money.format(GOAL - sum);
-  el("fill").style.width = `${pct}%`;
+  el('count').textContent = `${marked} / ${DAYS}`;
+  el('left').textContent = money.format(GOAL - sum);
+  el('fill').style.width = `${pct}%`;
 
-  el("railTotal").textContent = money.format(sum);
-  el("railCount").textContent = `${marked} / ${DAYS}`;
-  el("railFill").style.width = `${pct}%`;
+  el('railTotal').textContent = money.format(sum);
+  el('railCount').textContent = `${marked} / ${DAYS}`;
+  el('railFill').style.width = `${pct}%`;
 
   let next = 0;
   for (let i = 1; i <= DAYS; i++) {
@@ -306,9 +316,9 @@ function render() {
       break;
     }
   }
-  el("next").textContent = next
+  el('next').textContent = next
     ? `${money.format(next)} · ${shortDate.format(dateFor(next))}`
-    : "Complete";
+    : 'Complete';
 
   paintPace(marked);
 
@@ -320,8 +330,8 @@ function render() {
    The running total
    ------------------------------------------------------------------------- */
 
-const totalEl = el("total");
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const totalEl = el('total');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 /* What is on screen right now, and where it is heading. These have to be
    separate: a tap makes the backend echo the same state straight back, so
@@ -379,9 +389,9 @@ function countTo(next) {
   };
   countFrame = requestAnimationFrame(step);
 
-  totalEl.classList.remove("is-bumped");
+  totalEl.classList.remove('is-bumped');
   void totalEl.offsetWidth;
-  totalEl.classList.add("is-bumped");
+  totalEl.classList.add('is-bumped');
 }
 
 /* -------------------------------------------------------------------------
@@ -389,8 +399,16 @@ function countTo(next) {
    ------------------------------------------------------------------------- */
 
 const CHEERS = [
-  "Nice.", "Ten more.", "Rolling.", "Look at you.", "Halfway!",
-  "Unstoppable.", "So close.", "Nearly there.", "One to go.", "DONE!",
+  'Nice.',
+  'Ten more.',
+  'Rolling.',
+  'Look at you.',
+  'Halfway!',
+  'Unstoppable.',
+  'So close.',
+  'Nearly there.',
+  'One to go.',
+  'DONE!',
 ];
 
 /**
@@ -400,12 +418,19 @@ const CHEERS = [
 function celebrate(marked) {
   if (reduceMotion.matches) return;
 
-  const palette = ["--coral", "--tangerine", "--sunny", "--mint", "--grape", "--sky"];
-  const layer = document.createElement("div");
-  layer.className = "confetti";
+  const palette = [
+    '--coral',
+    '--tangerine',
+    '--sunny',
+    '--mint',
+    '--grape',
+    '--sky',
+  ];
+  const layer = document.createElement('div');
+  layer.className = 'confetti';
 
   for (let i = 0; i < 46; i++) {
-    const bit = document.createElement("i");
+    const bit = document.createElement('i');
     const angle = Math.random() * Math.PI * 2;
     const reach = 120 + Math.random() * 260;
     bit.style.cssText = `
@@ -413,7 +438,7 @@ function celebrate(marked) {
       --dx:${Math.cos(angle) * reach}px; --dy:${Math.sin(angle) * reach + 220}px;
       --size:${6 + Math.random() * 8}px;
       --c:var(${palette[i % palette.length]});
-      --round:${Math.random() > 0.5 ? "50%" : "2px"};
+      --round:${Math.random() > 0.5 ? '50%' : '2px'};
       --spin:${Math.random() * 900 - 450}deg;
       --dur:${1100 + Math.random() * 700}ms;
       --delay:${Math.random() * 180}ms;
@@ -421,9 +446,10 @@ function celebrate(marked) {
     layer.appendChild(bit);
   }
 
-  const banner = document.createElement("div");
-  banner.className = "cheer";
-  banner.textContent = CHEERS[Math.min(CHEERS.length - 1, Math.floor(marked / 10) - 1)] || "Nice.";
+  const banner = document.createElement('div');
+  banner.className = 'cheer';
+  banner.textContent =
+    CHEERS[Math.min(CHEERS.length - 1, Math.floor(marked / 10) - 1)] || 'Nice.';
 
   document.body.append(layer, banner);
   setTimeout(() => {
@@ -434,7 +460,7 @@ function celebrate(marked) {
   buzz([14, 60, 14]);
 }
 
-const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /**
  * Says how far along you are against how far along the date says you should
@@ -451,16 +477,16 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 function paintPace(marked) {
   const elapsed = elapsedDay();
 
-  let state = "even";
+  let state = 'even';
   let verdict;
   let detail;
 
   if (elapsed < 1) {
     // Getting a head start before day one is not a pace to be ahead of.
-    state = "waiting";
-    verdict = `Starts in ${plural(1 - elapsed, "day")}`;
+    state = 'waiting';
+    verdict = `Starts in ${plural(1 - elapsed, 'day')}`;
     detail = marked
-      ? `${plural(marked, "square")} already checked`
+      ? `${plural(marked, 'square')} already checked`
       : `Day 1 is ${longDate.format(dateFor(1))}`;
   } else {
     // Past the end the calendar stops at 100 — you cannot fall further behind
@@ -469,19 +495,19 @@ function paintPace(marked) {
     const delta = marked - calendar;
 
     if (marked >= DAYS) {
-      state = "done";
-      verdict = "All done";
+      state = 'done';
+      verdict = 'All done';
       detail = `Every one of the ${DAYS} days checked off`;
     } else {
       if (delta > 0) {
-        state = "ahead";
-        verdict = `${plural(delta, "day")} ahead`;
+        state = 'ahead';
+        verdict = `${plural(delta, 'day')} ahead`;
       } else if (delta === 0) {
-        state = "even";
-        verdict = "On pace";
+        state = 'even';
+        verdict = 'On pace';
       } else {
-        state = -delta >= 7 ? "far-behind" : "behind";
-        verdict = `${plural(-delta, "day")} behind`;
+        state = -delta >= 7 ? 'far-behind' : 'behind';
+        verdict = `${plural(-delta, 'day')} behind`;
       }
 
       detail = marked
@@ -491,15 +517,15 @@ function paintPace(marked) {
   }
 
   paceEl.dataset.state = state;
-  el("paceVerdict").textContent = verdict;
-  el("paceDetail").textContent = detail;
+  el('paceVerdict').textContent = verdict;
+  el('paceDetail').textContent = detail;
 }
 
 function renderStatic() {
-  el("goalInline").textContent = money.format(GOAL);
-  el("lastDayNum").textContent = String(DAYS);
-  el("startLabel").textContent = longDate.format(dateFor(1));
-  el("endLabel").textContent = longDate.format(dateFor(DAYS));
+  el('goalInline').textContent = money.format(GOAL);
+  el('lastDayNum').textContent = String(DAYS);
+  el('startLabel').textContent = longDate.format(dateFor(1));
+  el('endLabel').textContent = longDate.format(dateFor(DAYS));
 }
 
 /** Repaint what the start date decides: every square's date, and which one is
@@ -509,9 +535,12 @@ function refreshDates() {
     const cell = cells.get(i);
     if (!cell) continue;
     const date = dateFor(i);
-    cell.querySelector(".d").textContent = shortDate.format(date);
-    cell.setAttribute("aria-label", `Day ${i}, ${shortDate.format(date)}, ${money.format(i)}`);
-    cell.classList.toggle("today", i === today);
+    cell.querySelector('.d').textContent = shortDate.format(date);
+    cell.setAttribute(
+      'aria-label',
+      `Day ${i}, ${shortDate.format(date)}, ${money.format(i)}`
+    );
+    cell.classList.toggle('today', i === today);
   }
 }
 
@@ -535,15 +564,15 @@ function applyStart(iso) {
    ------------------------------------------------------------------------- */
 
 const STATUS_TEXT = {
-  connecting: "Connecting",
-  synced: "Shared",
-  syncing: "Saving",
-  offline: "Offline",
-  local: "This device",
-  error: "Sync error",
+  connecting: 'Connecting',
+  synced: 'Shared',
+  syncing: 'Saving',
+  offline: 'Offline',
+  local: 'This device',
+  error: 'Sync error',
 };
 
-let lastStatus = { mode: "local", state: "local" };
+let lastStatus = { mode: 'local', state: 'local' };
 
 /* The chip is the whole status surface now — the standing explanation under
    the action bar is gone. Nothing diagnostic went with it: tapping the chip
@@ -551,28 +580,33 @@ let lastStatus = { mode: "local", state: "local" };
 function paintStatus(status) {
   lastStatus = status;
   statusChip.dataset.state = status.state;
-  statusChip.querySelector(".chip__text").textContent = STATUS_TEXT[status.state] || status.state;
+  statusChip.querySelector('.chip__text').textContent =
+    STATUS_TEXT[status.state] || status.state;
 }
 
 /* Tapping the chip is the diagnostic path — the alternative is asking someone
    to open a console on a phone. */
-statusChip.addEventListener("click", () => {
+statusChip.addEventListener('click', () => {
   const s = lastStatus;
 
-  if (s.mode !== "remote") {
-    toast("Local only — see README.md to turn on sharing.");
+  if (s.mode !== 'remote') {
+    toast('Local only — see README.md to turn on sharing.');
     return;
   }
   if (s.error) {
-    toast(`${s.error.code} on ${s.error.at}. Host ${s.host}. Check the database rules.`);
+    toast(
+      `${s.error.code} on ${s.error.at}. Host ${s.host}. Check the database rules.`
+    );
     return;
   }
-  if (s.state === "connecting") {
+  if (s.state === 'connecting') {
     toast(`Opening a socket to ${s.host}…`);
     return;
   }
-  if (s.state === "offline") {
-    toast(`Can't reach ${s.host}. ${s.queued || 0} change(s) queued. Room ${room.slice(0, 6)}…`);
+  if (s.state === 'offline') {
+    toast(
+      `Can't reach ${s.host}. ${s.queued || 0} change(s) queued. Room ${room.slice(0, 6)}…`
+    );
     return;
   }
   toast(`Synced. Room ${room.slice(0, 6)}…`);
@@ -584,16 +618,16 @@ statusChip.addEventListener("click", () => {
 
 /** Restarting the animation needs the class gone for a frame, not just
  *  re-added, or a fast second tap does nothing. */
-const pig = el("pig");
+const pig = el('pig');
 let coinTimer;
 
 function dropCoin() {
   if (!pig) return;
-  pig.classList.remove("is-depositing");
+  pig.classList.remove('is-depositing');
   void pig.offsetWidth;
-  pig.classList.add("is-depositing");
+  pig.classList.add('is-depositing');
   clearTimeout(coinTimer);
-  coinTimer = setTimeout(() => pig.classList.remove("is-depositing"), 700);
+  coinTimer = setTimeout(() => pig.classList.remove('is-depositing'), 700);
 }
 
 function buzz(ms) {
@@ -609,9 +643,9 @@ function buzz(ms) {
 let toastTimer;
 function toast(message) {
   toastEl.textContent = message;
-  toastEl.classList.add("is-visible");
+  toastEl.classList.add('is-visible');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove("is-visible"), 2800);
+  toastTimer = setTimeout(() => toastEl.classList.remove('is-visible'), 2800);
 }
 
 /* ---------- room -------------------------------------------------------- */
@@ -619,21 +653,21 @@ function toast(message) {
 /* One sheet doing two jobs, because they are the same job asked at different
    moments: which room is this, and how does the other phone get into it. */
 
-const roomDialog = el("roomDialog");
-const roomInput = el("roomInput");
-const roomError = el("roomError");
+const roomDialog = el('roomDialog');
+const roomInput = el('roomInput');
+const roomError = el('roomError');
 
 const ROOM_COPY = {
-  "first-run": {
-    title: "Which tracker is this?",
+  'first-run': {
+    title: 'Which tracker is this?',
     action: "Join the other phone's room",
     note: isInstalled()
-      ? "Added to your home screen? It gets storage of its own, separate from the browser, so it starts out knowing nothing — even if you have opened the share link there plenty of times. Paste the code from the other phone once and it sticks."
-      : "Squares live in a room, and both phones have to be in the same one. Paste the link or code from the other phone to join it, or start a tracker of your own.",
+      ? 'Added to your home screen? It gets storage of its own, separate from the browser, so it starts out knowing nothing — even if you have opened the share link there plenty of times. Paste the code from the other phone once and it sticks.'
+      : 'Squares live in a room, and both phones have to be in the same one. Paste the link or code from the other phone to join it, or start a tracker of your own.',
   },
   manage: {
-    title: "Room",
-    action: "Switch to another room",
+    title: 'Room',
+    action: 'Switch to another room',
     note: "Anyone holding this code sees the same squares you do. Send the link when the other phone can open one — the code is for when it can't, like an app on a home screen with no address bar to paste into.",
   },
 };
@@ -641,11 +675,11 @@ const ROOM_COPY = {
 function openRoom(mode) {
   const copy = ROOM_COPY[mode];
   roomDialog.dataset.mode = mode;
-  el("roomTitle").textContent = copy.title;
-  el("roomNote").textContent = copy.note;
-  el("roomJoinLabel").textContent = copy.action;
-  el("roomCode").textContent = room || "—";
-  roomInput.value = "";
+  el('roomTitle').textContent = copy.title;
+  el('roomNote').textContent = copy.note;
+  el('roomJoinLabel').textContent = copy.action;
+  el('roomCode').textContent = room || '—';
+  roomInput.value = '';
   roomError.hidden = true;
   roomDialog.showModal();
 }
@@ -657,15 +691,15 @@ function showRoomError(message) {
 
 /* Nothing works until a room is picked, so the first-run sheet has no way out
    — Escape included, which a dialog otherwise honours for free. */
-roomDialog.addEventListener("cancel", (event) => {
-  if (roomDialog.dataset.mode === "first-run") event.preventDefault();
+roomDialog.addEventListener('cancel', (event) => {
+  if (roomDialog.dataset.mode === 'first-run') event.preventDefault();
 });
 
-el("share").addEventListener("click", () => openRoom("manage"));
-el("roomClose").addEventListener("click", () => roomDialog.close());
-el("roomFresh").addEventListener("click", () => adoptRoom(randomRoom()));
+el('share').addEventListener('click', () => openRoom('manage'));
+el('roomClose').addEventListener('click', () => roomDialog.close());
+el('roomFresh').addEventListener('click', () => adoptRoom(randomRoom()));
 
-el("roomForm").addEventListener("submit", (event) => {
+el('roomForm').addEventListener('submit', (event) => {
   event.preventDefault();
 
   const next = parseRoom(roomInput.value);
@@ -675,27 +709,27 @@ el("roomForm").addEventListener("submit", (event) => {
   }
   if (next === room) {
     roomDialog.close();
-    toast("Already in that room.");
+    toast('Already in that room.');
     return;
   }
   adoptRoom(next);
 });
 
-el("roomCopy").addEventListener("click", async () => {
+el('roomCopy').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(room);
-    toast("Code copied.");
+    toast('Code copied.');
     buzz(8);
   } catch {
     // Blocked or unavailable. The code is selectable text, so there is still
     // a way to take it by hand.
-    toast("Copy blocked — press and hold the code to select it.");
+    toast('Copy blocked — press and hold the code to select it.');
   }
 });
 
-el("roomSend").addEventListener("click", async () => {
+el('roomSend').addEventListener('click', async () => {
   if (!isConfigured(FIREBASE_CONFIG)) {
-    toast("Sharing needs Firebase set up first — see README.md.");
+    toast('Sharing needs Firebase set up first — see README.md.');
     return;
   }
 
@@ -704,31 +738,36 @@ el("roomSend").addEventListener("click", async () => {
   // Native share sheet on phones, clipboard everywhere else.
   if (navigator.share) {
     try {
-      await navigator.share({ title: "100 Days to Less Broke", url });
+      await navigator.share({ title: '100 Days to Less Broke', url });
       return;
     } catch (err) {
-      if (err && err.name === "AbortError") return;
+      if (err && err.name === 'AbortError') return;
     }
   }
 
   try {
     await navigator.clipboard.writeText(url);
-    toast("Link copied. Open it on the other phone.");
+    toast('Link copied. Open it on the other phone.');
   } catch {
-    prompt("Copy this link:", url);
+    prompt('Copy this link:', url);
   }
 });
 
 /* Cycles preference rather than flipping appearance, so "follow the system"
    stays reachable instead of being a state you can only get back to by
    clearing storage. */
-const THEME_ORDER = ["system", "light", "dark"];
-const THEME_LABEL = { system: "matching your system", light: "light", dark: "dark" };
+const THEME_ORDER = ['system', 'light', 'dark'];
+const THEME_LABEL = {
+  system: 'matching your system',
+  light: 'light',
+  dark: 'dark',
+};
 
-el("theme").addEventListener("click", () => {
+el('theme').addEventListener('click', () => {
   const theme = window.__theme;
   if (!theme) return;
-  const next = THEME_ORDER[(THEME_ORDER.indexOf(theme.pref()) + 1) % THEME_ORDER.length];
+  const next =
+    THEME_ORDER[(THEME_ORDER.indexOf(theme.pref()) + 1) % THEME_ORDER.length];
   theme.set(next);
   toast(`Theme: ${THEME_LABEL[next]}.`);
   buzz(8);
@@ -736,26 +775,26 @@ el("theme").addEventListener("click", () => {
 
 /* ---------- start date -------------------------------------------------- */
 
-const startDialog = el("startDialog");
-const startInput = el("startInput");
-const startError = el("startError");
-const startSave = el("startSave");
+const startDialog = el('startDialog');
+const startInput = el('startInput');
+const startError = el('startError');
+const startSave = el('startSave');
 
 function showStartError(message) {
   startError.textContent = message;
   startError.hidden = false;
 }
 
-el("editStart").addEventListener("click", () => {
+el('editStart').addEventListener('click', () => {
   startInput.value = startISO;
   startError.hidden = true;
   startSave.disabled = false;
   startDialog.showModal();
 });
 
-el("startCancel").addEventListener("click", () => startDialog.close());
+el('startCancel').addEventListener('click', () => startDialog.close());
 
-el("startForm").addEventListener("submit", async (event) => {
+el('startForm').addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const iso = startInput.value;
@@ -785,17 +824,21 @@ el("startForm").addEventListener("submit", async (event) => {
   }
 });
 
-el("today").addEventListener("click", () => {
+el('today').addEventListener('click', () => {
   if (!today) {
     const now = new Date();
-    toast(now < START ? "The challenge hasn't started yet." : "The challenge window has ended.");
+    toast(
+      now < START
+        ? "The challenge hasn't started yet."
+        : 'The challenge window has ended.'
+    );
     return;
   }
   const cell = cells.get(today);
-  cell.scrollIntoView({ behavior: "smooth", block: "center" });
-  cell.classList.remove("is-flash");
+  cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  cell.classList.remove('is-flash');
   void cell.offsetWidth; // restart the animation
-  cell.classList.add("is-flash");
+  cell.classList.add('is-flash');
   buzz(10);
 });
 
@@ -806,15 +849,15 @@ let armTimer;
 function disarm() {
   armed = false;
   clearTimeout(armTimer);
-  resetBtn.classList.remove("is-armed");
-  resetBtn.querySelector("span").textContent = "Clear";
+  resetBtn.classList.remove('is-armed');
+  resetBtn.querySelector('span').textContent = 'Clear';
 }
 
-resetBtn.addEventListener("click", () => {
+resetBtn.addEventListener('click', () => {
   if (!armed) {
     armed = true;
-    resetBtn.classList.add("is-armed");
-    resetBtn.querySelector("span").textContent = "Sure?";
+    resetBtn.classList.add('is-armed');
+    resetBtn.querySelector('span').textContent = 'Sure?';
     buzz(15);
     armTimer = setTimeout(disarm, 4000);
     return;
@@ -822,7 +865,7 @@ resetBtn.addEventListener("click", () => {
   disarm();
   sync?.clearAll();
   buzz([10, 40, 10]);
-  toast("Cleared.");
+  toast('Cleared.');
 });
 
 /* -------------------------------------------------------------------------
@@ -834,48 +877,50 @@ resetBtn.addEventListener("click", () => {
    it being unique or true — it is there so a note reads as being from someone.
    Bubbles pick their side by comparing it, which is why saving a name
    re-renders the log. */
-const NAME_STORE = "savings100:name";
+const NAME_STORE = 'savings100:name';
 
-const boardLog = el("boardLog");
-const boardInput = el("boardInput");
+const boardLog = el('boardLog');
+const boardInput = el('boardInput');
 
-let myName = (localStorage.getItem(NAME_STORE) || "").trim();
+let myName = (localStorage.getItem(NAME_STORE) || '').trim();
 let messages = [];
 
 const clockTime = new Intl.DateTimeFormat(CHALLENGE.locale, {
-  hour: "numeric",
-  minute: "2-digit",
+  hour: 'numeric',
+  minute: '2-digit',
 });
 const dayHeading = new Intl.DateTimeFormat(CHALLENGE.locale, {
-  weekday: "long",
-  month: "short",
-  day: "numeric",
+  weekday: 'long',
+  month: 'short',
+  day: 'numeric',
 });
 
 function paintWho() {
-  el("boardWhoName").textContent = myName || "Set your name";
+  el('boardWhoName').textContent = myName || 'Set your name';
 }
 
 /** Pinned to the newest note while you are already at the end, and left alone
  *  while you are reading back through older ones. */
 function atNewest() {
-  return boardLog.scrollHeight - boardLog.scrollTop - boardLog.clientHeight < 60;
+  return (
+    boardLog.scrollHeight - boardLog.scrollTop - boardLog.clientHeight < 60
+  );
 }
 
 function renderMessages() {
   const stick = atNewest();
-  boardLog.textContent = "";
+  boardLog.textContent = '';
 
   if (!messages.length) {
-    const empty = document.createElement("p");
-    empty.className = "board__empty";
-    empty.textContent = "Nothing yet. Leave a note — it turns up on the other phone.";
+    const empty = document.createElement('p');
+    empty.className = 'board__empty';
+    empty.textContent = "Nothing yet. Let's chat babe-a!! ";
     boardLog.appendChild(empty);
     return;
   }
 
   const frag = document.createDocumentFragment();
-  let lastStamp = "";
+  let lastStamp = '';
 
   for (const note of messages) {
     const when = new Date(note.at);
@@ -884,24 +929,28 @@ function renderMessages() {
     const stamp = toISO(when);
     if (stamp !== lastStamp) {
       lastStamp = stamp;
-      const divider = document.createElement("p");
-      divider.className = "board__day";
+      const divider = document.createElement('p');
+      divider.className = 'board__day';
       divider.textContent = dayHeading.format(when);
       frag.appendChild(divider);
     }
 
-    const row = document.createElement("div");
+    const row = document.createElement('div');
     row.className =
-      "msg" + (note.by === myName ? " msg--mine" : "") + (note.pending ? " is-pending" : "");
+      'msg' +
+      (note.by === myName ? ' msg--mine' : '') +
+      (note.pending ? ' is-pending' : '');
 
-    const meta = document.createElement("span");
-    meta.className = "msg__meta";
-    meta.textContent = note.pending ? `${note.by} · sending` : `${note.by} · ${clockTime.format(when)}`;
+    const meta = document.createElement('span');
+    meta.className = 'msg__meta';
+    meta.textContent = note.pending
+      ? `${note.by} · sending`
+      : `${note.by} · ${clockTime.format(when)}`;
 
     // textContent throughout: a note is whatever the other person typed, and
     // it is never markup.
-    const body = document.createElement("span");
-    body.className = "msg__text";
+    const body = document.createElement('span');
+    body.className = 'msg__text';
     body.textContent = note.text;
 
     row.append(meta, body);
@@ -914,9 +963,9 @@ function renderMessages() {
 
 /* ---------- your name --------------------------------------------------- */
 
-const nameDialog = el("nameDialog");
-const nameInput = el("nameInput");
-const nameError = el("nameError");
+const nameDialog = el('nameDialog');
+const nameInput = el('nameInput');
+const nameError = el('nameError');
 
 /** Set when the sheet was raised mid-send, so the note goes out once there is
  *  a name to sign it with. */
@@ -929,19 +978,19 @@ function askName(then) {
   nameDialog.showModal();
 }
 
-el("boardWho").addEventListener("click", () => askName(null));
+el('boardWho').addEventListener('click', () => askName(null));
 
-el("nameCancel").addEventListener("click", () => {
+el('nameCancel').addEventListener('click', () => {
   afterName = null;
   nameDialog.close();
 });
 
-el("nameForm").addEventListener("submit", (event) => {
+el('nameForm').addEventListener('submit', (event) => {
   event.preventDefault();
 
-  const next = nameInput.value.trim().replace(/\s+/g, " ");
+  const next = nameInput.value.trim().replace(/\s+/g, ' ');
   if (!next) {
-    nameError.textContent = "Something to sign with — a first name is plenty.";
+    nameError.textContent = 'Something to sign with — a first name is plenty.';
     nameError.hidden = false;
     return;
   }
@@ -959,9 +1008,9 @@ el("nameForm").addEventListener("submit", (event) => {
 
 /* ---------- sending ----------------------------------------------------- */
 
-const boardForm = el("boardForm");
+const boardForm = el('boardForm');
 
-boardForm.addEventListener("submit", (event) => {
+boardForm.addEventListener('submit', (event) => {
   event.preventDefault();
 
   const text = boardInput.value.trim();
@@ -974,12 +1023,16 @@ boardForm.addEventListener("submit", (event) => {
     return;
   }
   if (!sync) {
-    toast("Still opening the room — try that again in a moment.");
+    toast('Still opening the room — try that again in a moment.');
     return;
   }
 
-  boardInput.value = "";
-  sync.sendMessage({ at: Date.now(), by: myName, text: text.slice(0, MESSAGE_MAX) });
+  boardInput.value = '';
+  sync.sendMessage({
+    at: Date.now(),
+    by: myName,
+    text: text.slice(0, MESSAGE_MAX),
+  });
   buzz(8);
 });
 
@@ -988,11 +1041,11 @@ boardForm.addEventListener("submit", (event) => {
    ------------------------------------------------------------------------- */
 
 function watchRail() {
-  const sentinel = el("sentinel");
-  if (!("IntersectionObserver" in window)) return;
+  const sentinel = el('sentinel');
+  if (!('IntersectionObserver' in window)) return;
 
   new IntersectionObserver(
-    ([entry]) => railbar.classList.toggle("is-visible", !entry.isIntersecting),
+    ([entry]) => railbar.classList.toggle('is-visible', !entry.isIntersecting),
     { threshold: 0 }
   ).observe(sentinel);
 }
@@ -1011,7 +1064,7 @@ function watchRail() {
  * auto-scroll is gone and restoration is turned off; `Today` is still one tap
  * away when you do want to jump.
  */
-if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 function toTop() {
   window.scrollTo(0, 0);
@@ -1020,7 +1073,7 @@ function toTop() {
 toTop();
 // Layout settles after the grid is built and the fonts swap in, and a restore
 // can land after this script runs, so claim the top again on the way out.
-window.addEventListener("load", () => requestAnimationFrame(toTop));
+window.addEventListener('load', () => requestAnimationFrame(toTop));
 
 renderStatic();
 buildGrid();
@@ -1054,19 +1107,19 @@ if (room) {
     for (const [day, on] of buffered.splice(0)) sync.setDay(day, on);
   });
 } else {
-  paintStatus({ mode: "local", state: "local", reason: "no-room" });
-  openRoom("first-run");
+  paintStatus({ mode: 'local', state: 'local', reason: 'no-room' });
+  openRoom('first-run');
 }
 
 // A share link opened in an already-running tab should switch rooms.
-window.addEventListener("hashchange", () => {
+window.addEventListener('hashchange', () => {
   const next = parseRoom(location.hash);
   if (next && next !== room) location.reload();
 });
 
-if ("serviceWorker" in navigator && location.protocol === "https:") {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
       /* offline support is a bonus, not a requirement */
     });
   });
